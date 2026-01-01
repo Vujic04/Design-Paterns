@@ -1,4 +1,4 @@
-package drawing;
+package view;
 
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;

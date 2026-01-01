@@ -2,12 +2,6 @@ package controller;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-import drawing.CircleDlg;
-import drawing.DonutDlg;
-import drawing.LineDlg;
-import drawing.PnlDrawing;
-import drawing.PointDlg;
-import drawing.RectangleDlg;
 import geometry.Circle;
 import geometry.Donut;
 import geometry.Line;
@@ -15,6 +9,12 @@ import geometry.Point;
 import geometry.Rectangle;
 import geometry.Shape;
 import model.DrawingModel;
+import view.CircleDlg;
+import view.DonutDlg;
+import view.LineDlg;
+import view.PnlDrawing;
+import view.PointDlg;
+import view.RectangleDlg;
 
 
 

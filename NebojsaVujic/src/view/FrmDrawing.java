@@ -1,4 +1,4 @@
-package drawing;
+package view;
 
 import java.awt.EventQueue;
 
