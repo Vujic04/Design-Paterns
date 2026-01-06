@@ -36,6 +36,7 @@ public class PnlDrawing extends JPanel {
 		for(Shape shape : model.getShapes()) {
 			shape.draw(g);
 		}
+		System.out.println("PAINT shapes=" + model.getShapes().size());
 	}
 	
 	

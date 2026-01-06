@@ -8,9 +8,11 @@ import geometry.Line;
 import geometry.Point;
 import geometry.Rectangle;
 import geometry.Shape;
+import hexagonAdapter.HexagonAdapter;
 import model.DrawingModel;
 import view.CircleDlg;
 import view.DonutDlg;
+import view.HexagonDlg;
 import view.LineDlg;
 import view.PnlDrawing;
 import view.PointDlg;
@@ -21,7 +23,7 @@ import view.RectangleDlg;
 public class Controller extends MouseAdapter {
 	
 	public enum Tool {
-	    POINT, LINE, CIRCLE, RECTANGLE, DONUT, SELECT
+	    POINT, LINE, CIRCLE, RECTANGLE, DONUT, SELECT, HEXAGON
 	}
 	
 	private final DrawingModel model;
@@ -69,6 +71,7 @@ public class Controller extends MouseAdapter {
 	        case CIRCLE -> addCircle(x, y);
 	        case RECTANGLE -> addRectangle(x, y);
 	        case DONUT -> addDonut(x, y);
+	        case HEXAGON -> addHexagon(x, y);
 	        case SELECT -> model.selectShape(x, y);
 	    }
 
@@ -172,6 +175,23 @@ public class Controller extends MouseAdapter {
 		tool = Tool.SELECT;
 	}
 	
+	public void addHexagon(int x,int y) {
+		HexagonDlg dialog = new HexagonDlg();
+		dialog.setTextFieldForX(x);
+		dialog.setTextFieldForY(y);
+		dialog.regularTextFields();
+		dialog.setVisible(true);
+		
+		if (dialog.isConfirmed()) {
+			int radius = dialog.getRadius();
+			HexagonAdapter hexagon = new HexagonAdapter(x,y,radius,false,dialog.getOutlineColor(),dialog.getInnerColor());
+			model.addShape(hexagon);
+			view.repaint();
+		}
+		tool = Tool.SELECT;
+		System.out.println(model.getShapes());
+	}
+	
 	public boolean modifySelected() {
 		Shape item = model.getSelectedShape();
 		if (item == null) {
@@ -201,6 +221,11 @@ public class Controller extends MouseAdapter {
         } else if (item instanceof Rectangle r) {
             RectangleDlg dialog = new RectangleDlg();
             dialog.modifyRectangle(r);
+            if (!dialog.isConfirmed()) return false;
+
+        } else if (item instanceof HexagonAdapter h) {
+            HexagonDlg dialog = new HexagonDlg();
+            dialog.modifyHexagon(h);
             if (!dialog.isConfirmed()) return false;
 
         } 

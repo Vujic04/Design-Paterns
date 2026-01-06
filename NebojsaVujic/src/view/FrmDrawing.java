@@ -25,6 +25,7 @@ import geometry.Point;
 import geometry.Rectangle;
 import geometry.Shape;
 import model.DrawingModel;
+import javax.swing.SwingConstants;
 
 
 public class FrmDrawing extends JFrame {
@@ -162,6 +163,14 @@ public class FrmDrawing extends JFrame {
 				controller.setTool(Tool.RECTANGLE);
 			}
 		});
+		
+		JButton btnHexagon = new JButton("Hexagon");
+		btnHexagon.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				controller.setTool(Tool.HEXAGON);
+			}
+		});
+		northPanel.add(btnHexagon);
 		northPanel.add(btnRectangle);
 	}
 
