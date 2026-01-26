@@ -31,7 +31,7 @@ public class Controller extends MouseAdapter {
 	private Point startPoint;
 	private Point endPoint;
 	private Tool tool = Tool.SELECT;
-	
+	private Shape selectedShape;
 	
 
 	public Controller(DrawingModel model, PnlDrawing view) {
@@ -46,13 +46,14 @@ public class Controller extends MouseAdapter {
     }
 	
 	public Shape getSelectedShape() {
-		return model.getSelectedShape();
+		return selectedShape;
 	}
 	
 	public void deleteSelected() {
-		Shape s = model.getSelectedShape();
+		Shape s = getSelectedShape();
 		if(s != null) {
 			model.removeShape(s);
+			selectedShape=null;
 			view.repaint();
 		}
 	}
@@ -72,7 +73,7 @@ public class Controller extends MouseAdapter {
 	        case RECTANGLE -> addRectangle(x, y);
 	        case DONUT -> addDonut(x, y);
 	        case HEXAGON -> addHexagon(x, y);
-	        case SELECT -> model.selectShape(x, y);
+	        case SELECT -> selectShape(x, y);
 	    }
 
 	    view.repaint();
@@ -191,9 +192,42 @@ public class Controller extends MouseAdapter {
 		tool = Tool.SELECT;
 		System.out.println(model.getShapes());
 	}
+	public void selectShape(int x, int y) {
+        boolean shapeFound = false;
+
+        for (int i = model.getShapes().size() - 1; i >= 0; i--) {
+            Shape shape = model.getShapes().get(i);
+
+            if (shapeFound) {
+                shape.setSelected(false);
+                continue;
+            }
+
+            if (shape.contains(x, y)) {
+                if (selectedShape == shape) {
+                    selectedShape = null;
+                    shape.setSelected(false);
+                } else {
+                    selectedShape = shape;
+                    shape.setSelected(true);
+                }
+                shapeFound = true;
+            } else {
+                shape.setSelected(false);
+            }
+        }
+
+        if (!shapeFound) selectedShape = null;
+    }
+	
+	public void clearSelection() {
+		selectedShape=null;
+		for (Shape s: model.getShapes())
+			s.setSelected(false);
+	}
 	
 	public boolean modifySelected() {
-		Shape item = model.getSelectedShape();
+		Shape item = getSelectedShape();
 		if (item == null) {
 			return false;
 		}
@@ -229,7 +263,7 @@ public class Controller extends MouseAdapter {
             if (!dialog.isConfirmed()) return false;
 
         } 
-		model.clearSelection();
+		clearSelection();
 		tool=Tool.SELECT;
 		view.repaint();
 		return true;

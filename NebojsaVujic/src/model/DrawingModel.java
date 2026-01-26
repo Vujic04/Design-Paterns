@@ -26,43 +26,4 @@ public class DrawingModel {
 			selectedShape=null;
 	}
 	
-	public Shape getSelectedShape() {
-		return selectedShape;
-	}
-	
-	public void clearSelection() {
-		selectedShape=null;
-		for (Shape s: shapes)
-			s.setSelected(false);
-	}
-	
-	
-	public void selectShape(int x, int y) {
-        boolean shapeFound = false;
-
-        for (int i = shapes.size() - 1; i >= 0; i--) {
-            Shape shape = shapes.get(i);
-
-            if (shapeFound) {
-                shape.setSelected(false);
-                continue;
-            }
-
-            if (shape.contains(x, y)) {
-                if (selectedShape == shape) {
-                    selectedShape = null;
-                    shape.setSelected(false);
-                } else {
-                    selectedShape = shape;
-                    shape.setSelected(true);
-                }
-                shapeFound = true;
-            } else {
-                shape.setSelected(false);
-            }
-        }
-
-        if (!shapeFound) selectedShape = null;
-    }
-	
 }
