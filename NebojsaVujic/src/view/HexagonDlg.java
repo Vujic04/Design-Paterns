@@ -57,6 +57,7 @@ public class HexagonDlg extends JDialog {
 	 */
 	public HexagonDlg() {
 		setModal(true);
+		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		setBounds(100, 100, 450, 300);
 		getContentPane().setLayout(new BorderLayout());
 		contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -187,6 +188,7 @@ public class HexagonDlg extends JDialog {
 						} else {
 							radius = Integer.parseInt(textFieldForRadius.getText());
 							confirmed = true;
+							dispose();
 							setVisible(false);
 						}
 					}
@@ -229,6 +231,7 @@ public class HexagonDlg extends JDialog {
 	    	
 	    	hexagon.setX(newX);
 	    	hexagon.setY(newY);
+	    	hexagon.setRadius(radius);
 	    	
 	    	hexagon.setAreaColor(innerColor);
 	    	hexagon.setBorderColor(outlineColor);	
@@ -259,6 +262,16 @@ public class HexagonDlg extends JDialog {
 	}
 	public Color getInnerColor() {
 		return innerColor;
+	}
+
+	public void setOutlineColor(Color c) {
+		// TODO Auto-generated method stub
+		outlineColor=c;
+	}
+
+	public void setInnerColor(Color c) {
+		// TODO Auto-generated method stub
+		innerColor=c;
 	}
 	
 

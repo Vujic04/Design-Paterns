@@ -59,6 +59,7 @@ public class DonutDlg extends JDialog {
 	public DonutDlg() {
 		setTitle("Vujic Nebojsa IT60-2023");
 		setModal(true);
+		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		setBounds(100, 100, 450, 300);
 		getContentPane().setLayout(new BorderLayout());
 		contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -238,6 +239,7 @@ public class DonutDlg extends JDialog {
 						            return;
 						        }
 								confirmed = true;
+								dispose();
 								setVisible(false);
 							}
 					}
@@ -267,6 +269,7 @@ public class DonutDlg extends JDialog {
 	    setTextFieldForOuetRadius(donut.getRadius());
 	    outlineColor=donut.getColor();
 	    innerColor=donut.getInnerColor();
+	    confirmed=false;
 	    setVisible(true);
 
 	    if (isConfirmed()) {
@@ -321,6 +324,16 @@ public class DonutDlg extends JDialog {
 	}
 	public Color getInnerColor() {
 		return innerColor;
+	}
+
+	public void setOutlineColor(Color c) {
+		// TODO Auto-generated method stub
+		outlineColor=c;
+	}
+
+	public void setInnerColor(Color c) {
+		// TODO Auto-generated method stub
+		innerColor=c;
 	}
 
 }

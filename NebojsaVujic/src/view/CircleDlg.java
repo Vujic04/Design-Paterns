@@ -55,6 +55,7 @@ public class CircleDlg extends JDialog {
 	 */
 	public CircleDlg() {
 		setModal(true);
+		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		setBounds(100, 100, 450, 300);
 		getContentPane().setLayout(new BorderLayout());
 		contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -179,6 +180,7 @@ public class CircleDlg extends JDialog {
 						} else {
 							radius = Integer.parseInt(textFieldForRadius.getText());
 							confirmed = true;
+							dispose();
 							setVisible(false);
 						}
 					}
@@ -192,6 +194,7 @@ public class CircleDlg extends JDialog {
 				cancelButton.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
 						confirmed=false;
+						dispose();
 						setVisible(false);
 					}
 				});
@@ -207,18 +210,17 @@ public class CircleDlg extends JDialog {
 	    setTextFieldForRadius(circle.getRadius());
 	    outlineColor=circle.getColor();
 	    innerColor=circle.getInnerColor();
+	    confirmed=false;
 	    setVisible(true);
 
 	    if (isConfirmed()) {
 	    	int newX = Integer.parseInt(textFieldForX.getText());
-	    	int newY = Integer.parseInt(textFieldForY.getText());
-	    	int radius=Integer.parseInt(textFieldForRadius.getText());
-	    	Point center =new Point();
-	    	center.setXCoordinate(newX);
-	    	center.setYCoordinate(newY);
-	    	circle.setCenter(center);
-	    	try {
-				circle.setRadius(radius);
+	        int newY = Integer.parseInt(textFieldForY.getText());
+	        int r = Integer.parseInt(textFieldForRadius.getText());
+
+	        circle.setCenter(new Point(newX, newY));
+	        try {
+				circle.setRadius(r);
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -254,6 +256,16 @@ public class CircleDlg extends JDialog {
 	}
 	public Color getInnerColor() {
 		return innerColor;
+	}
+
+	public void setOutlineColor(Color c) {
+		// TODO Auto-generated method stub
+		outlineColor=c;
+	}
+
+	public void setInnerColor(Color c) {
+		// TODO Auto-generated method stub
+		innerColor=c;
 	}
 
 }

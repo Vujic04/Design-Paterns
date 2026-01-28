@@ -58,6 +58,7 @@ public class RectangleDlg extends JDialog {
 	public RectangleDlg() {
 		setTitle("Vujic Nebojsa IT60-2023");
 		setModal(true);
+		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		setBounds(100, 100, 450, 300);
 		getContentPane().setLayout(new BorderLayout());
 		contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -212,6 +213,7 @@ public class RectangleDlg extends JDialog {
 							height = Integer.parseInt(textFieldForHeight.getText());
 							width = Integer.parseInt(textFieldForWidth.getText());
 							confirmed = true;
+							dispose();
 							setVisible(false);
 						}
 					}
@@ -243,6 +245,7 @@ public class RectangleDlg extends JDialog {
 		setTextFieldForWidth(rectangle.getWidth());
 	    outlineColor=rectangle.getColor();
 	    innerColor=rectangle.getInnerColor();
+	    confirmed=false;
 	    setVisible(true);
 
 	    if (isConfirmed()) {
@@ -267,10 +270,11 @@ public class RectangleDlg extends JDialog {
 		return confirmed;
 	}
 	public int getHeightRect() {
-		return height;
+		return Integer.parseInt(textFieldForHeight.getText().trim());
 	}
 	public int getWidthRect() {
-		return width;
+		return Integer.parseInt(textFieldForWidth.getText().trim());
+
 	}
 	public void setTextFieldForX(int a){
 		 textFieldForUpperX.setText(Integer.toString(a));
@@ -294,6 +298,16 @@ public class RectangleDlg extends JDialog {
 	}
 	public Color getInnerColor() {
 		return innerColor;
+	}
+
+	public void setOutlineColor(Color c) {
+		// TODO Auto-generated method stub
+		outlineColor=c;
+	}
+
+	public void setInnerColor(Color c) {
+		// TODO Auto-generated method stub
+		innerColor=c;
 	}
 
 

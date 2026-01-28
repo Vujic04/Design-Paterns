@@ -48,6 +48,7 @@ public class PointDlg extends JDialog {
 	public PointDlg() {
 		setTitle("Vujic Nebojsa IT60-2023");
 		setModal(true);
+		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		setBounds(100, 100, 450, 300);
 		getContentPane().setLayout(new BorderLayout());
 		contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -144,6 +145,7 @@ public class PointDlg extends JDialog {
 				            JOptionPane.showMessageDialog(null, "Fields cannot be empty!", "Error", JOptionPane.ERROR_MESSAGE);
 				        } else {
 				            confirmed = true;
+				            dispose();
 				            setVisible(false);
 				        }
 					}

@@ -1,4 +1,5 @@
 package controller;
+import java.awt.Color;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -32,6 +33,7 @@ public class Controller extends MouseAdapter {
 	private Point endPoint;
 	private Tool tool = Tool.SELECT;
 	private Shape selectedShape;
+	private final java.util.List<Shape> selectedShapes = new java.util.ArrayList<Shape>();
 	
 
 	public Controller(DrawingModel model, PnlDrawing view) {
@@ -46,16 +48,31 @@ public class Controller extends MouseAdapter {
     }
 	
 	public Shape getSelectedShape() {
-		return selectedShape;
+		return selectedShapes.size() == 1 ? selectedShapes.get(0) : null;
 	}
-	
+	public boolean hasSelection() {
+	    return !selectedShapes.isEmpty();
+	}
+
+	public int getSelectionCount() {
+	    return selectedShapes.size();
+	}
+
+
 	public void deleteSelected() {
-		Shape s = getSelectedShape();
-		if(s != null) {
-			model.removeShape(s);
-			selectedShape=null;
-			view.repaint();
+		
+		if(selectedShapes.isEmpty()) {
+			return;
 		}
+		
+		java.util.List<Shape> delete = new java.util.ArrayList<>(selectedShapes); 
+		
+		clearSelection();
+		
+		for(Shape s : delete) {
+			model.removeShape(s);
+		}
+		view.repaint();
 	}
 
 
@@ -73,7 +90,7 @@ public class Controller extends MouseAdapter {
 	        case RECTANGLE -> addRectangle(x, y);
 	        case DONUT -> addDonut(x, y);
 	        case HEXAGON -> addHexagon(x, y);
-	        case SELECT -> selectShape(x, y);
+	        case SELECT -> selectShapes(x, y);
 	    }
 
 	    view.repaint();
@@ -110,6 +127,7 @@ public class Controller extends MouseAdapter {
 			dialog.setTextFieldForX2(endPoint.getXCoordinate());
 			dialog.setTextFieldForY2(endPoint.getYCoordinate());
 			dialog.regularTextFields();
+			dialog.setColor(Color.BLACK);
 			dialog.setVisible(true);
 			
 			if(dialog.isConfirmed()) {
@@ -128,6 +146,8 @@ public class Controller extends MouseAdapter {
 		dialog.setTextFieldForX(x);
 		dialog.setTextFieldForY(y);
 		dialog.regularTextFields();
+		dialog.setOutlineColor(Color.BLACK);
+		dialog.setInnerColor(Color.GRAY);
 		dialog.setVisible(true);
 		
 		if(dialog.isConfirmed()) {
@@ -145,13 +165,15 @@ public class Controller extends MouseAdapter {
 		dialog.setTextFieldForX(x);
 		dialog.setTextFieldForY(y);
 		dialog.regularTextFields();
+		dialog.setOutlineColor(Color.BLACK);
+		dialog.setInnerColor(Color.GRAY);
 		dialog.setVisible(true);
 		
 		if(dialog.isConfirmed()) {
 			Point upperLeft = new Point(x,y);
-			int height = dialog.getHeight();
-			int width = dialog.getWidth();
-			Rectangle rect = new Rectangle(upperLeft, width, height, true, dialog.getOutlineColor(), dialog.getInnerColor());
+			int height = dialog.getHeightRect();
+			int width = dialog.getWidthRect();
+			Rectangle rect = new Rectangle(upperLeft, width, height, false, dialog.getOutlineColor(), dialog.getInnerColor());
 			model.addShape(rect);
 			view.repaint();
 		}
@@ -163,13 +185,15 @@ public class Controller extends MouseAdapter {
 		dialog.setTextFieldForX(x);
 		dialog.setTextFieldForY(y);
 		dialog.regularTextFields();
+		dialog.setOutlineColor(Color.BLACK);
+		dialog.setInnerColor(Color.GRAY);
 		dialog.setVisible(true);
 		
 		if (dialog.isConfirmed()) {
 			Point center = new Point (x,y);
 			int innerRadius = dialog.getInner();
 			int outerRadius = dialog.getOuter();
-			Donut donut = new Donut(center, outerRadius, innerRadius, true, dialog.getOutlineColor(), dialog.getInnerColor());
+			Donut donut = new Donut(center, outerRadius, innerRadius, false, dialog.getOutlineColor(), dialog.getInnerColor());
 			model.addShape(donut);
 			view.repaint();
 		}
@@ -181,6 +205,8 @@ public class Controller extends MouseAdapter {
 		dialog.setTextFieldForX(x);
 		dialog.setTextFieldForY(y);
 		dialog.regularTextFields();
+		dialog.setOutlineColor(Color.BLACK);
+		dialog.setInnerColor(Color.GRAY);
 		dialog.setVisible(true);
 		
 		if (dialog.isConfirmed()) {
@@ -192,45 +218,56 @@ public class Controller extends MouseAdapter {
 		tool = Tool.SELECT;
 		System.out.println(model.getShapes());
 	}
-	public void selectShape(int x, int y) {
-        boolean shapeFound = false;
+	
+	
+	
+	private Shape findTopMostAt(int x,int y) {
+		java.util.List<Shape> shapes = model.getShapes();
+		
+		for (int i=shapes.size() -  1; i>=0;i--) {
+			Shape s = shapes.get(i);
+			if (s.contains(x, y)) {
+				return s;
+			}
+		}
+		return null;
+	}
+	
+	
+	public void selectShapes (int x, int y) {
+		Shape topMost = findTopMostAt(x,y);
+		
+		if(topMost==null) {
+			clearSelection();
+			return;
+		}
+		
+		if(selectedShapes.contains(topMost)) {
+			topMost.setSelected(false);
+			selectedShapes.remove(topMost);
+		}else {
+			topMost.setSelected(true);
+			selectedShapes.add(topMost);
+		}
+	}	
+	
 
-        for (int i = model.getShapes().size() - 1; i >= 0; i--) {
-            Shape shape = model.getShapes().get(i);
-
-            if (shapeFound) {
-                shape.setSelected(false);
-                continue;
-            }
-
-            if (shape.contains(x, y)) {
-                if (selectedShape == shape) {
-                    selectedShape = null;
-                    shape.setSelected(false);
-                } else {
-                    selectedShape = shape;
-                    shape.setSelected(true);
-                }
-                shapeFound = true;
-            } else {
-                shape.setSelected(false);
-            }
-        }
-
-        if (!shapeFound) selectedShape = null;
-    }
 	
 	public void clearSelection() {
-		selectedShape=null;
-		for (Shape s: model.getShapes())
+		//selectedShape=null;
+		for (Shape s: model.getShapes()) {
 			s.setSelected(false);
+		}
+		selectedShapes.clear();
 	}
 	
 	public boolean modifySelected() {
-		Shape item = getSelectedShape();
-		if (item == null) {
+		
+		if (selectedShapes.size() != 1) {
 			return false;
 		}
+		Shape item = selectedShapes.get(0);
+		boolean changed=false;
 		if (item instanceof Point p) {
 			PointDlg dialog = new PointDlg();
 			dialog.modifyPoint(p);
@@ -242,17 +279,17 @@ public class Controller extends MouseAdapter {
             dialog.modifyLine(l);
             if (!dialog.isConfirmed()) return false;
 
-        } else if (item instanceof Circle c) {
-            CircleDlg dialog = new CircleDlg();
-            dialog.modifyCircle(c);;
-            if (!dialog.isConfirmed()) return false;
-
         } else if (item instanceof Donut d) {
             DonutDlg dialog = new DonutDlg();
             dialog.modifyDonut(d);
             if (!dialog.isConfirmed()) return false;
 
-        } else if (item instanceof Rectangle r) {
+        } else if (item instanceof Circle c) {
+            CircleDlg dialog = new CircleDlg();
+            dialog.modifyCircle(c);;
+            if (!dialog.isConfirmed()) return false;
+
+        }  else if (item instanceof Rectangle r) {
             RectangleDlg dialog = new RectangleDlg();
             dialog.modifyRectangle(r);
             if (!dialog.isConfirmed()) return false;
@@ -263,6 +300,7 @@ public class Controller extends MouseAdapter {
             if (!dialog.isConfirmed()) return false;
 
         } 
+		if(!changed) return false;
 		clearSelection();
 		tool=Tool.SELECT;
 		view.repaint();

@@ -81,15 +81,17 @@ public class FrmDrawing extends JFrame {
 		JButton btnDelete = new JButton("Delete");
 		btnDelete.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if (controller.getSelectedShape() == null) {
+				if (!controller.hasSelection()) {
 		            JOptionPane.showMessageDialog(null, "No shape selected to delete", "Message", JOptionPane.INFORMATION_MESSAGE);
 		            return;
 		        }
-				Shape selectedShape = controller.getSelectedShape();
 				
-				if (selectedShape !=null) {
+				int count = controller.getSelectionCount();
+
+				
+				
 		            int response = JOptionPane.showConfirmDialog(null, 
-		                		"Do you want to delete this shape?\n\n" , 
+		                		"Do you want to delete "+ count +" shape?\n\n" , 
 		                        "Delete confirmation", 
 		                        JOptionPane.OK_CANCEL_OPTION, 
 		                        JOptionPane.WARNING_MESSAGE);
@@ -98,9 +100,7 @@ public class FrmDrawing extends JFrame {
 		            	controller.deleteSelected();
 		                }
 		                return;
-		            }else {
-		            	JOptionPane.showMessageDialog(null, "No shape selected to delete", "Message", JOptionPane.INFORMATION_MESSAGE);
-		            }
+		            
 		        }
 		});
 		
@@ -112,8 +112,13 @@ public class FrmDrawing extends JFrame {
 		JButton btnModify = new JButton("Modify");
 		btnModify.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if(controller.getSelectedShape()==null) {
+				int count = controller.getSelectionCount();
+				if(count==0) {
 					JOptionPane.showMessageDialog(null, "No shape selected to modify", "Message", JOptionPane.INFORMATION_MESSAGE);
+					return;
+				}
+				if(count>1) {
+					JOptionPane.showMessageDialog(null, "Select exectly one shape to modify", "Message", JOptionPane.INFORMATION_MESSAGE);
 					return;
 				}
 				controller.modifySelected();
