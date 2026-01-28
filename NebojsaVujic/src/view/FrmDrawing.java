@@ -7,6 +7,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
+import Observer.Observer;
 import controller.Controller;
 import controller.Controller.Tool;
 
@@ -28,32 +29,19 @@ import model.DrawingModel;
 import javax.swing.SwingConstants;
 
 
-public class FrmDrawing extends JFrame {
+public class FrmDrawing extends JFrame implements Observer{
 
 	private static final long serialVersionUID = 1L;
 	private JPanel contentPane;
 	private final DrawingModel model = new DrawingModel();
 	private final PnlDrawing pnlDrawing = new PnlDrawing(model);
 	private final Controller controller = new Controller(model,pnlDrawing);
-	/**
-	 * Launch the application.
-	 */
-	/*public static void main(String[] args) {
-		EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				try {
-					FrmDrawing frame = new FrmDrawing();
-					frame.setVisible(true);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		});
-	}*/
+	private JButton btnDelete;
+	private JButton btnModify;
 
-	/**
-	 * Create the frame.
-	 */
+
+
+	
 	public FrmDrawing() {
 		setTitle("Nebojsa Vujic IT60-2023");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -78,7 +66,7 @@ public class FrmDrawing extends JFrame {
 		contentPane.add(northPanel, BorderLayout.NORTH);
 		northPanel.setLayout(new GridLayout(0, 7, 0, 0));
 		
-		JButton btnDelete = new JButton("Delete");
+		btnDelete = new JButton("Delete");
 		btnDelete.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if (!controller.hasSelection()) {
@@ -109,7 +97,7 @@ public class FrmDrawing extends JFrame {
 		northPanel.add(btnDelete);
 		
 		
-		JButton btnModify = new JButton("Modify");
+		btnModify = new JButton("Modify");
 		btnModify.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				int count = controller.getSelectionCount();
@@ -177,6 +165,18 @@ public class FrmDrawing extends JFrame {
 		});
 		northPanel.add(btnHexagon);
 		northPanel.add(btnRectangle);
+		controller.addObservers(this);
+		update();
+	}
+
+
+
+	@Override
+	public void update() {
+		// TODO Auto-generated method stub
+		int count = controller.getSelectionCount();
+        btnDelete.setEnabled(count > 0);   
+        btnModify.setEnabled(count == 1);  
 	}
 
 }

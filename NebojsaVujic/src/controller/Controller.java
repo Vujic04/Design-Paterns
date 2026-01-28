@@ -2,7 +2,11 @@ package controller;
 import java.awt.Color;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.List;
 
+import Observer.Observable;
+import Observer.Observer;
 import geometry.Circle;
 import geometry.Donut;
 import geometry.Line;
@@ -21,7 +25,7 @@ import view.RectangleDlg;
 
 
 
-public class Controller extends MouseAdapter {
+public class Controller extends MouseAdapter implements Observable{
 	
 	public enum Tool {
 	    POINT, LINE, CIRCLE, RECTANGLE, DONUT, SELECT, HEXAGON
@@ -33,8 +37,34 @@ public class Controller extends MouseAdapter {
 	private Point endPoint;
 	private Tool tool = Tool.SELECT;
 	private Shape selectedShape;
+	
 	private final java.util.List<Shape> selectedShapes = new java.util.ArrayList<Shape>();
 	
+	private final List<Observer> observers = new ArrayList<>();
+	
+
+
+
+	@Override
+	public void addObservers(Observer o) {
+		// TODO Auto-generated method stub
+		observers.add(o);
+	}
+
+	@Override
+	public void removeObservers(Observer o) {
+		// TODO Auto-generated method stub
+		observers.remove(o);
+	}
+
+	@Override
+	public void notifyObservers() {
+		// TODO Auto-generated method stub
+		for (Observer o : observers) {
+			o.update();
+		}
+		
+	}
 
 	public Controller(DrawingModel model, PnlDrawing view) {
 		this.model = model;
@@ -72,6 +102,7 @@ public class Controller extends MouseAdapter {
 		for(Shape s : delete) {
 			model.removeShape(s);
 		}
+		notifyObservers();
 		view.repaint();
 	}
 
@@ -239,6 +270,7 @@ public class Controller extends MouseAdapter {
 		
 		if(topMost==null) {
 			clearSelection();
+			notifyObservers();
 			return;
 		}
 		
@@ -249,6 +281,7 @@ public class Controller extends MouseAdapter {
 			topMost.setSelected(true);
 			selectedShapes.add(topMost);
 		}
+		notifyObservers();
 	}	
 	
 
@@ -259,6 +292,7 @@ public class Controller extends MouseAdapter {
 			s.setSelected(false);
 		}
 		selectedShapes.clear();
+		notifyObservers();
 	}
 	
 	public boolean modifySelected() {
@@ -306,5 +340,7 @@ public class Controller extends MouseAdapter {
 		view.repaint();
 		return true;
 	}
+
+	
 	
 }
