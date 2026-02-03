@@ -38,6 +38,9 @@ public class Controller extends MouseAdapter implements Observable{
 	private Tool tool = Tool.SELECT;
 	private Shape selectedShape;
 	
+	private Color innerColor=Color.GRAY;
+	private Color outlineColor=Color.BLACK;
+	
 	private final java.util.List<Shape> selectedShapes = new java.util.ArrayList<Shape>();
 	
 	private final List<Observer> observers = new ArrayList<>();
@@ -45,26 +48,7 @@ public class Controller extends MouseAdapter implements Observable{
 
 
 
-	@Override
-	public void addObservers(Observer o) {
-		// TODO Auto-generated method stub
-		observers.add(o);
-	}
-
-	@Override
-	public void removeObservers(Observer o) {
-		// TODO Auto-generated method stub
-		observers.remove(o);
-	}
-
-	@Override
-	public void notifyObservers() {
-		// TODO Auto-generated method stub
-		for (Observer o : observers) {
-			o.update();
-		}
-		
-	}
+	
 
 	public Controller(DrawingModel model, PnlDrawing view) {
 		this.model = model;
@@ -134,9 +118,11 @@ public class Controller extends MouseAdapter implements Observable{
 		dialog.setTextFieldForX(x);
 		dialog.setTextFieldForY(y);
 		dialog.setVisible(true);
-		
+
 		if(dialog.isConfirmed()) {
-			Point point = new Point (x,y,false,dialog.getSelectedColor());
+			Color c=dialog.getSelectedColor();
+			if (c == null) c = getOutlineColor();
+			Point point = new Point (x,y,false,c);
 			model.addShape(point);
 			view.repaint();
 		}
@@ -158,7 +144,7 @@ public class Controller extends MouseAdapter implements Observable{
 			dialog.setTextFieldForX2(endPoint.getXCoordinate());
 			dialog.setTextFieldForY2(endPoint.getYCoordinate());
 			dialog.regularTextFields();
-			dialog.setColor(Color.BLACK);
+			dialog.setColor(getOutlineColor());
 			dialog.setVisible(true);
 			
 			if(dialog.isConfirmed()) {
@@ -177,8 +163,8 @@ public class Controller extends MouseAdapter implements Observable{
 		dialog.setTextFieldForX(x);
 		dialog.setTextFieldForY(y);
 		dialog.regularTextFields();
-		dialog.setOutlineColor(Color.BLACK);
-		dialog.setInnerColor(Color.GRAY);
+		dialog.setOutlineColor(getOutlineColor());
+		dialog.setInnerColor(getInnerColor());
 		dialog.setVisible(true);
 		
 		if(dialog.isConfirmed()) {
@@ -196,8 +182,8 @@ public class Controller extends MouseAdapter implements Observable{
 		dialog.setTextFieldForX(x);
 		dialog.setTextFieldForY(y);
 		dialog.regularTextFields();
-		dialog.setOutlineColor(Color.BLACK);
-		dialog.setInnerColor(Color.GRAY);
+		dialog.setOutlineColor(getOutlineColor());
+		dialog.setInnerColor(getInnerColor());
 		dialog.setVisible(true);
 		
 		if(dialog.isConfirmed()) {
@@ -216,8 +202,8 @@ public class Controller extends MouseAdapter implements Observable{
 		dialog.setTextFieldForX(x);
 		dialog.setTextFieldForY(y);
 		dialog.regularTextFields();
-		dialog.setOutlineColor(Color.BLACK);
-		dialog.setInnerColor(Color.GRAY);
+		dialog.setOutlineColor(getOutlineColor());
+		dialog.setInnerColor(getInnerColor());
 		dialog.setVisible(true);
 		
 		if (dialog.isConfirmed()) {
@@ -236,8 +222,8 @@ public class Controller extends MouseAdapter implements Observable{
 		dialog.setTextFieldForX(x);
 		dialog.setTextFieldForY(y);
 		dialog.regularTextFields();
-		dialog.setOutlineColor(Color.BLACK);
-		dialog.setInnerColor(Color.GRAY);
+		dialog.setOutlineColor(getOutlineColor());
+		dialog.setInnerColor(getInnerColor());
 		dialog.setVisible(true);
 		
 		if (dialog.isConfirmed()) {
@@ -341,6 +327,43 @@ public class Controller extends MouseAdapter implements Observable{
 		return true;
 	}
 
-	
+	@Override
+	public void addObservers(Observer o) {
+		// TODO Auto-generated method stub
+		observers.add(o);
+	}
+
+	@Override
+	public void removeObservers(Observer o) {
+		// TODO Auto-generated method stub
+		observers.remove(o);
+	}
+
+	@Override
+	public void notifyObservers() {
+		// TODO Auto-generated method stub
+		for (Observer o : observers) {
+			o.update();
+		}
+		
+	}
+
+	public Color getInnerColor() {
+		return innerColor;
+	}
+
+	public void setInnerColor(Color c) {
+		innerColor = c;
+		System.out.print(innerColor);
+	}
+
+	public Color getOutlineColor() {
+		return outlineColor;
+	}
+
+	public void setOutlineColor(Color c) {
+		outlineColor = c;
+		System.out.print(outlineColor);
+	}
 	
 }

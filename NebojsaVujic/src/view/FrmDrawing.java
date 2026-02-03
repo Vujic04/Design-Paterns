@@ -13,6 +13,8 @@ import controller.Controller.Tool;
 
 import java.awt.BorderLayout;
 import javax.swing.JButton;
+import javax.swing.JColorChooser;
+
 import java.awt.Color;
 import java.awt.GridLayout;
 import java.awt.event.ActionListener;
@@ -165,6 +167,30 @@ public class FrmDrawing extends JFrame implements Observer{
 		});
 		northPanel.add(btnHexagon);
 		northPanel.add(btnRectangle);
+		
+		JButton btnOutlineColor = new JButton("Outline color");
+		btnOutlineColor.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				Color c =JColorChooser.showDialog(FrmDrawing.this, "Choose outline color", controller.getOutlineColor());
+				if(c!=null) {
+					controller.setOutlineColor(c);
+					btnOutlineColor.setBackground(c);
+				}
+			}
+		});
+		northPanel.add(btnOutlineColor);
+		
+		JButton btnInnerColor = new JButton("Inner color");
+		btnInnerColor.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				Color c =JColorChooser.showDialog(FrmDrawing.this, "Choose inner color", controller.getInnerColor());
+				if(c!=null) {
+					controller.setInnerColor(c);
+					btnInnerColor.setBackground(c);
+				}
+			}
+		});
+		northPanel.add(btnInnerColor);
 		controller.addObservers(this);
 		update();
 	}

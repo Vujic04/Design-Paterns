@@ -121,10 +121,10 @@ public class PointDlg extends JDialog {
 			JButton btnColor = new JButton("Choos color");
 			btnColor.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					selectedColor = JColorChooser.showDialog(null, "Choos color", Color.black);
-		             if (selectedColor == null) {
+					selectedColor = JColorChooser.showDialog(null, "Choos color", null);
+		             /*if (selectedColor == null) {
 		                 selectedColor = Color.black;
-		             }
+		             }*/
 				}
 			});
 			GridBagConstraints gbc_brnColor = new GridBagConstraints();
