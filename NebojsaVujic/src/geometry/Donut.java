@@ -149,4 +149,22 @@ public class Donut extends Circle {
 					getCenter().getYCoordinate() - 2 + innerRadius, 4, 4); //dole
 		}
 	}
+	public Donut clone() {
+		Point p= new Point(getCenter().getXCoordinate(),getCenter().getYCoordinate());
+		return new Donut (p,this.getRadius(),this.getInnerRadius(),this.isSelected(),this.getColor(),this.getInnerColor());
+	}
+	public void applyFrom(Donut d) {
+		this.getCenter().setXCoordinate(d.getCenter().getXCoordinate());
+		this.getCenter().setYCoordinate(d.getCenter().getYCoordinate());
+		
+		try {
+			this.setRadius(d.getRadius());
+		}catch(Exception e){
+
+		}
+		this.setInnerRadius(d.getInnerRadius());
+		
+		this.setColor(d.getColor());
+		this.setInnerColor(d.getInnerColor());
+	}
 }

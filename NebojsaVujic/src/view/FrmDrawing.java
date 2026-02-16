@@ -29,6 +29,10 @@ import geometry.Rectangle;
 import geometry.Shape;
 import model.DrawingModel;
 import javax.swing.SwingConstants;
+import java.awt.GridBagLayout;
+import java.awt.GridBagConstraints;
+import java.awt.Insets;
+import javax.swing.JLabel;
 
 
 public class FrmDrawing extends JFrame implements Observer{
@@ -40,6 +44,8 @@ public class FrmDrawing extends JFrame implements Observer{
 	private final Controller controller = new Controller(model,pnlDrawing);
 	private JButton btnDelete;
 	private JButton btnModify;
+	private JButton btnUndo;
+	private JButton btnRedo;
 
 
 
@@ -66,9 +72,132 @@ public class FrmDrawing extends JFrame implements Observer{
 		
 		JPanel northPanel = new JPanel();
 		contentPane.add(northPanel, BorderLayout.NORTH);
-		northPanel.setLayout(new GridLayout(0, 7, 0, 0));
+		
+		
+				JButton btnPoint = new JButton("Point");
+				btnPoint.addActionListener(new ActionListener() {
+					public void actionPerformed(ActionEvent e) {
+						controller.setTool(Tool.POINT);
+					}
+				});
+				northPanel.setLayout(new GridLayout(0, 7, 0, 0));
+				northPanel.add(btnPoint);
+		
+		JButton btnLine = new JButton("Line");
+		btnLine.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				controller.setTool(Tool.LINE);
+			}
+		});
+		northPanel.add(btnLine);
+		
+		JButton btnCircle = new JButton("Circle");
+		btnCircle.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				controller.setTool(Tool.CIRCLE);
+			}
+		});
+		northPanel.add(btnCircle);
+		
+		JButton btnRectangle = new JButton("Rectangle");
+		btnRectangle.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				controller.setTool(Tool.RECTANGLE);
+			}
+		});
+		
+		JLabel label = new JLabel("");
+		northPanel.add(label);
+		
+		JLabel label_1 = new JLabel("");
+		northPanel.add(label_1);
+		
+		JLabel label_2 = new JLabel("");
+		northPanel.add(label_2);
+		
+		btnUndo = new JButton("Undo");
+		northPanel.add(btnUndo);
+		btnUndo.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				controller.undo();
+			}
+		});
+		northPanel.add(btnRectangle);
+		
+		JButton btnDonut = new JButton("Donut");
+		btnDonut.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				controller.setTool(Tool.DONUT);
+			}
+		});
+		northPanel.add(btnDonut);
+		
+		JButton btnHexagon = new JButton("Hexagon");
+		btnHexagon.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				controller.setTool(Tool.HEXAGON);
+			}
+		});
+		northPanel.add(btnHexagon);
+		
+		JLabel label_3 = new JLabel("");
+		northPanel.add(label_3);
+		
+		JLabel label_4 = new JLabel("");
+		northPanel.add(label_4);
+		
+		JLabel label_5 = new JLabel("");
+		northPanel.add(label_5);
+		
+		btnRedo = new JButton("Redo");
+		northPanel.add(btnRedo);
+		btnRedo.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				controller.redo();
+			}
+		});
+		
+		JPanel panel = new JPanel();
+		contentPane.add(panel, BorderLayout.SOUTH);
+		
+		JButton btnOutlineColor = new JButton("Outline color");
+		panel.add(btnOutlineColor);
+		btnOutlineColor.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				Color c =JColorChooser.showDialog(FrmDrawing.this, "Choose outline color", controller.getOutlineColor());
+				if(c!=null) {
+					controller.setOutlineColor(c);
+					btnOutlineColor.setBackground(c);
+				}
+			}
+		});
+		
+		JButton btnInnerColor = new JButton("Inner color");
+		panel.add(btnInnerColor);
+		
+		
+		btnModify = new JButton("Modify");
+		panel.add(btnModify);
+		btnModify.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				int count = controller.getSelectionCount();
+				if(count==0) {
+					JOptionPane.showMessageDialog(null, "No shape selected to modify", "Message", JOptionPane.INFORMATION_MESSAGE);
+					return;
+				}
+				if(count>1) {
+					JOptionPane.showMessageDialog(null, "Select exectly one shape to modify", "Message", JOptionPane.INFORMATION_MESSAGE);
+					return;
+				}
+				controller.modifySelected();
+			}
+		});
+		
+		btnModify.setForeground(Color.WHITE);
+		btnModify.setBackground(Color.ORANGE);
 		
 		btnDelete = new JButton("Delete");
+		panel.add(btnDelete);
 		btnDelete.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if (!controller.hasSelection()) {
@@ -96,91 +225,6 @@ public class FrmDrawing extends JFrame implements Observer{
 		
 		btnDelete.setForeground(Color.WHITE);
 		btnDelete.setBackground(Color.RED);
-		northPanel.add(btnDelete);
-		
-		
-		btnModify = new JButton("Modify");
-		btnModify.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				int count = controller.getSelectionCount();
-				if(count==0) {
-					JOptionPane.showMessageDialog(null, "No shape selected to modify", "Message", JOptionPane.INFORMATION_MESSAGE);
-					return;
-				}
-				if(count>1) {
-					JOptionPane.showMessageDialog(null, "Select exectly one shape to modify", "Message", JOptionPane.INFORMATION_MESSAGE);
-					return;
-				}
-				controller.modifySelected();
-			}
-		});
-		
-		btnModify.setForeground(Color.WHITE);
-		btnModify.setBackground(Color.ORANGE);
-		northPanel.add(btnModify);
-		
-		JButton btnLine = new JButton("Line");
-		btnLine.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				controller.setTool(Tool.LINE);
-			}
-		});
-		northPanel.add(btnLine);
-		
-		JButton btnCircle = new JButton("Circle");
-		btnCircle.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				controller.setTool(Tool.CIRCLE);
-			}
-		});
-		northPanel.add(btnCircle);
-		
-		JButton btnDonut = new JButton("Donut");
-		btnDonut.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				controller.setTool(Tool.DONUT);
-			}
-		});
-		northPanel.add(btnDonut);
-
-
-		JButton btnPoint = new JButton("Point");
-		btnPoint.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				controller.setTool(Tool.POINT);
-			}
-		});
-		northPanel.add(btnPoint);
-		
-		JButton btnRectangle = new JButton("Rectangle");
-		btnRectangle.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				controller.setTool(Tool.RECTANGLE);
-			}
-		});
-		
-		JButton btnHexagon = new JButton("Hexagon");
-		btnHexagon.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				controller.setTool(Tool.HEXAGON);
-			}
-		});
-		northPanel.add(btnHexagon);
-		northPanel.add(btnRectangle);
-		
-		JButton btnOutlineColor = new JButton("Outline color");
-		btnOutlineColor.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				Color c =JColorChooser.showDialog(FrmDrawing.this, "Choose outline color", controller.getOutlineColor());
-				if(c!=null) {
-					controller.setOutlineColor(c);
-					btnOutlineColor.setBackground(c);
-				}
-			}
-		});
-		northPanel.add(btnOutlineColor);
-		
-		JButton btnInnerColor = new JButton("Inner color");
 		btnInnerColor.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				Color c =JColorChooser.showDialog(FrmDrawing.this, "Choose inner color", controller.getInnerColor());
@@ -190,7 +234,6 @@ public class FrmDrawing extends JFrame implements Observer{
 				}
 			}
 		});
-		northPanel.add(btnInnerColor);
 		controller.addObservers(this);
 		update();
 	}
@@ -203,6 +246,8 @@ public class FrmDrawing extends JFrame implements Observer{
 		int count = controller.getSelectionCount();
         btnDelete.setEnabled(count > 0);   
         btnModify.setEnabled(count == 1);  
+       	btnUndo.setEnabled(controller.undoPosible());
+       	btnRedo.setEnabled(controller.redoPosible());
 	}
 
 }

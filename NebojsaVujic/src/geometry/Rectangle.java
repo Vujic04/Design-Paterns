@@ -149,4 +149,18 @@ public class Rectangle extends Shape {
 		this.innerColor=innerColor;
 	}
 	
+	public Rectangle clone() {
+		Point p= new Point(getUpperLeftPoint().getXCoordinate(),getUpperLeftPoint().getYCoordinate());
+		return new Rectangle (p, this.getWidth(),this.getHeight(), this.isSelected(), this.getColor(),this.getInnerColor());	
+	}
+	
+	public void applyFrom(Rectangle r) {
+		this.upperLeftPoint.setXCoordinate(r.upperLeftPoint.getXCoordinate());
+		this.upperLeftPoint.setYCoordinate(r.upperLeftPoint.getYCoordinate());
+		this.width=r.width;
+		this.height=r.height;
+		this.color=r.color;
+		this.innerColor=r.innerColor;
+	}
+	
 }

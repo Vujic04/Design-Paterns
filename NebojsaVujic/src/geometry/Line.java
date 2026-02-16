@@ -106,4 +106,17 @@ public class Line extends Shape {
 		this.color=color;
 		
 	}
+	public Line clone() {
+		 Point sp = new Point(startPoint.getXCoordinate(), startPoint.getYCoordinate());
+		 Point ep = new Point(endPoint.getXCoordinate(), endPoint.getYCoordinate());
+		 return new Line(sp, ep, this.isSelected(), this.color);
+	}
+	public void applyFrom(Line src) {
+	    this.getStartPoint().setXCoordinate(src.getStartPoint().getXCoordinate());
+	    this.getStartPoint().setYCoordinate(src.getStartPoint().getYCoordinate());
+	    this.getEndPoint().setXCoordinate(src.getEndPoint().getXCoordinate());
+	    this.getEndPoint().setYCoordinate(src.getEndPoint().getYCoordinate());
+	    this.setColor(src.getColor());
+	}
+
 }

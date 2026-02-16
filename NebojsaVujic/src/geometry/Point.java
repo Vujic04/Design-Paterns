@@ -136,5 +136,12 @@ public class Point extends Shape {
 		// TODO Auto-generated method stub
 		return yCoordinate;
 	}
-
+	public Point clone() {
+		return new Point(this.xCoordinate,this.yCoordinate,this.isSelected(),this.color);
+	}
+	public void applyForm(Point p) {
+		this.xCoordinate=p.xCoordinate;
+		this.yCoordinate=p.yCoordinate;
+		this.color=p.color;
+	}
 }

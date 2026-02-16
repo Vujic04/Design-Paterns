@@ -81,5 +81,17 @@ public class HexagonAdapter extends Shape {
 	public boolean isSelected() {
 		return hexagon.isSelected();
 	}
-
+	
+	public HexagonAdapter clone() {
+		return new HexagonAdapter(this.getX(),this.getY(),this.getRadius(),this.isSelected(),this.getBorderColor(),this.getAreaColor());
+	}
+	
+	public void applyFrom(HexagonAdapter h) {
+		this.setX(h.getX());
+		this.setY(h.getY());
+		this.setRadius(h.getRadius());
+		this.setBorderColor(h.getBorderColor());
+		this.setAreaColor(h.getAreaColor());
+		
+	}
 }

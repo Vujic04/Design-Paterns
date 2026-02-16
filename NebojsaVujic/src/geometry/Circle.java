@@ -146,4 +146,21 @@ public class Circle extends Shape{
 		this.innerColor=innerColor;
 	}
 	
+	public Circle clone() {
+		Point p= new Point(getCenter().getXCoordinate(),getCenter().getYCoordinate());
+		return new Circle (p,this.getRadius(), this.isSelected(),this.getColor(),this.getInnerColor());
+	}
+	public void applyFrom(Circle c) {
+		this.getCenter().setXCoordinate(c.getCenter().getXCoordinate());
+		this.getCenter().setYCoordinate(c.getCenter().getYCoordinate());
+		
+		try {
+			this.setRadius(c.getRadius());
+		}catch(Exception e){
+
+		}
+		
+		this.setColor(c.getColor());
+		this.setInnerColor(c.getInnerColor());
+	}
 }

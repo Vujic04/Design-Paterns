@@ -7,6 +7,16 @@ import java.util.List;
 
 import Observer.Observable;
 import Observer.Observer;
+import command.AddShapeCmd;
+import command.Command;
+import command.RemoveShapeCmd;
+import command.UpdateCircleCmd;
+import command.UpdateDonutCmd;
+import command.UpdateHexagonAdapterCmd;
+import command.UpdateLineCmd;
+import command.UpdatePointCmd;
+import command.UpdateRectangleCmd;
+import command.UpdateSelectionCmd;
 import geometry.Circle;
 import geometry.Donut;
 import geometry.Line;
@@ -36,7 +46,6 @@ public class Controller extends MouseAdapter implements Observable{
 	private Point startPoint;
 	private Point endPoint;
 	private Tool tool = Tool.SELECT;
-	private Shape selectedShape;
 	
 	private Color innerColor=Color.GRAY;
 	private Color outlineColor=Color.BLACK;
@@ -45,7 +54,26 @@ public class Controller extends MouseAdapter implements Observable{
 	
 	private final List<Observer> observers = new ArrayList<>();
 	
-
+	private final java.util.Stack<command.Command>undoStack= new java.util.Stack<>();
+	private final java.util.Stack<command.Command>redoStack= new java.util.Stack<>();
+	
+	public java.util.List<Shape> snapshotSelection() {
+	    return new java.util.ArrayList<>(selectedShapes);
+	}
+	
+	public void applySelection(java.util.List<Shape> select) {
+		for(Shape s : model.getShapes()) {
+			s.setSelected(false);
+		}
+		selectedShapes.clear();
+		
+		for(Shape s : select) {
+			s.setSelected(true);
+			selectedShapes.add(s);
+		}
+		notifyObservers();
+		view.repaint();
+	}
 
 
 	
@@ -61,17 +89,12 @@ public class Controller extends MouseAdapter implements Observable{
         System.out.println("SET TOOL -> " + this.tool);
     }
 	
-	public Shape getSelectedShape() {
-		return selectedShapes.size() == 1 ? selectedShapes.get(0) : null;
-	}
-	public boolean hasSelection() {
-	    return !selectedShapes.isEmpty();
-	}
+	public Shape getSelectedShape() { return selectedShapes.size() == 1 ? selectedShapes.get(0) : null; }
+	
+	public boolean hasSelection() { return !selectedShapes.isEmpty(); }
 
-	public int getSelectionCount() {
-	    return selectedShapes.size();
-	}
-
+	public int getSelectionCount() { return selectedShapes.size(); }
+	
 
 	public void deleteSelected() {
 		
@@ -84,10 +107,9 @@ public class Controller extends MouseAdapter implements Observable{
 		clearSelection();
 		
 		for(Shape s : delete) {
-			model.removeShape(s);
+			executeCommand(new RemoveShapeCmd(model,s));
 		}
 		notifyObservers();
-		view.repaint();
 	}
 
 
@@ -123,8 +145,7 @@ public class Controller extends MouseAdapter implements Observable{
 			Color c=dialog.getSelectedColor();
 			if (c == null) c = getOutlineColor();
 			Point point = new Point (x,y,false,c);
-			model.addShape(point);
-			view.repaint();
+			executeCommand(new AddShapeCmd(model,point));
 		}
 		
 		tool=Tool.SELECT;
@@ -149,8 +170,7 @@ public class Controller extends MouseAdapter implements Observable{
 			
 			if(dialog.isConfirmed()) {
 				Line line = new Line (startPoint, endPoint, false, dialog.getSelectedColor());
-				model.addShape(line);
-				view.repaint();
+				executeCommand(new AddShapeCmd(model,line));
 			}
 			startPoint=null;
 			endPoint=null;
@@ -171,8 +191,7 @@ public class Controller extends MouseAdapter implements Observable{
 			int radius = dialog.getRadius();
 			Point center = new Point (x,y);
 			Circle circle = new Circle (center, radius, false, dialog.getOutlineColor(), dialog.getInnerColor());
-			model.addShape(circle);
-			view.repaint();
+			executeCommand(new AddShapeCmd(model,circle));
 		}
 		tool = Tool.SELECT;
 	}
@@ -191,8 +210,7 @@ public class Controller extends MouseAdapter implements Observable{
 			int height = dialog.getHeightRect();
 			int width = dialog.getWidthRect();
 			Rectangle rect = new Rectangle(upperLeft, width, height, false, dialog.getOutlineColor(), dialog.getInnerColor());
-			model.addShape(rect);
-			view.repaint();
+			executeCommand(new AddShapeCmd(model,rect));
 		}
 		tool = Tool.SELECT;
 	}
@@ -211,8 +229,7 @@ public class Controller extends MouseAdapter implements Observable{
 			int innerRadius = dialog.getInner();
 			int outerRadius = dialog.getOuter();
 			Donut donut = new Donut(center, outerRadius, innerRadius, false, dialog.getOutlineColor(), dialog.getInnerColor());
-			model.addShape(donut);
-			view.repaint();
+			executeCommand(new AddShapeCmd(model,donut));
 		}
 		tool = Tool.SELECT;
 	}
@@ -229,8 +246,7 @@ public class Controller extends MouseAdapter implements Observable{
 		if (dialog.isConfirmed()) {
 			int radius = dialog.getRadius();
 			HexagonAdapter hexagon = new HexagonAdapter(x,y,radius,false,dialog.getOutlineColor(),dialog.getInnerColor());
-			model.addShape(hexagon);
-			view.repaint();
+			executeCommand(new AddShapeCmd(model,hexagon));
 		}
 		tool = Tool.SELECT;
 		System.out.println(model.getShapes());
@@ -251,7 +267,7 @@ public class Controller extends MouseAdapter implements Observable{
 	}
 	
 	
-	public void selectShapes (int x, int y) {
+	/*public void selectShapes (int x, int y) {
 		Shape topMost = findTopMostAt(x,y);
 		
 		if(topMost==null) {
@@ -268,12 +284,27 @@ public class Controller extends MouseAdapter implements Observable{
 			selectedShapes.add(topMost);
 		}
 		notifyObservers();
-	}	
-	
+	}	*/
+	public void selectShapes(int x, int y) {
+	    java.util.List<Shape> before = snapshotSelection();
+
+	    Shape topMost = findTopMostAt(x, y);
+	    java.util.List<Shape> after = new java.util.ArrayList<>(before);
+
+	    if (topMost == null) {
+	        after.clear();
+	    } else {
+	        if (after.contains(topMost)) {
+	        	after.remove(topMost);
+	        }
+	        else after.add(topMost);
+	    }
+
+	    executeCommand(new UpdateSelectionCmd(this, before, after));
+	}
 
 	
 	public void clearSelection() {
-		//selectedShape=null;
 		for (Shape s: model.getShapes()) {
 			s.setSelected(false);
 		}
@@ -287,79 +318,147 @@ public class Controller extends MouseAdapter implements Observable{
 			return false;
 		}
 		Shape item = selectedShapes.get(0);
-		boolean changed=false;
+		
 		if (item instanceof Point p) {
+			Point before=p.clone();
+		    
 			PointDlg dialog = new PointDlg();
 			dialog.modifyPoint(p);
+			
 			if(!dialog.isConfirmed()) {
+				p.applyForm(before);
 				return false;
 			}
+			Point after=p.clone();
+			p.applyForm(before);
+			executeCommand(new UpdatePointCmd(p, after));
+			item.setSelected(true);
+			
 		} else if (item instanceof Line l) {
+			Line before = l.clone();
             LineDlg dialog = new LineDlg();
             dialog.modifyLine(l);
-            if (!dialog.isConfirmed()) return false;
+            if (!dialog.isConfirmed()) {
+            	l.applyFrom(before);
+            	return false;
+            }
+            Line after =l.clone();
+            l.applyFrom(before);
+            executeCommand(new UpdateLineCmd(l, after));
+            item.setSelected(true);
 
         } else if (item instanceof Donut d) {
+        	Donut before =d.clone();
             DonutDlg dialog = new DonutDlg();
             dialog.modifyDonut(d);
-            if (!dialog.isConfirmed()) return false;
+            if (!dialog.isConfirmed()) {
+            	d.applyFrom(before);
+            	return false;
+            }
+            Donut after=d.clone();
+            d.applyFrom(before);
+            executeCommand(new UpdateDonutCmd(d, after));
+            item.setSelected(true);
+
 
         } else if (item instanceof Circle c) {
+        	Circle before = c.clone();
             CircleDlg dialog = new CircleDlg();
             dialog.modifyCircle(c);;
-            if (!dialog.isConfirmed()) return false;
+            if (!dialog.isConfirmed()) {
+            	c.applyFrom(before);
+            	return false;
+            }
+            Circle after=c.clone();
+            c.applyFrom(before);
+            executeCommand(new UpdateCircleCmd(c, after));
+            item.setSelected(true);
 
         }  else if (item instanceof Rectangle r) {
+        	Rectangle before = r.clone();
             RectangleDlg dialog = new RectangleDlg();
             dialog.modifyRectangle(r);
-            if (!dialog.isConfirmed()) return false;
+            if (!dialog.isConfirmed()) {
+            		r.applyFrom(before);
+            		return false;
+            	}
+            Rectangle after=r.clone();
+            r.applyFrom(before);
+            executeCommand(new UpdateRectangleCmd(r, after));
+            item.setSelected(true);
 
         } else if (item instanceof HexagonAdapter h) {
+        	HexagonAdapter before=h.clone();
             HexagonDlg dialog = new HexagonDlg();
             dialog.modifyHexagon(h);
-            if (!dialog.isConfirmed()) return false;
-
+            if (!dialog.isConfirmed()) { 
+            	h.applyFrom(before);
+            	return false;
+            }
+            HexagonAdapter after =h.clone();
+            h.applyFrom(before);
+            executeCommand(new UpdateHexagonAdapterCmd(h, after));
+            item.setSelected(true);
         } 
-		if(!changed) return false;
-		clearSelection();
+		//clearSelection();
 		tool=Tool.SELECT;
 		view.repaint();
 		return true;
 	}
+	private void executeCommand(Command c) {
+		c.execute();
+		undoStack.push(c);
+		redoStack.clear();
+		view.repaint();
+	}
+	public void undo() {
+		if(undoStack.isEmpty()) return;
+		Command c = undoStack.pop();
+		c.unexecute();
+		System.out.println("MODEL size = " + model.getShapes().size());
+		redoStack.push(c);
+		view.repaint();
+		notifyObservers();
+	}
+	
+	public void redo() {
+		if(redoStack.isEmpty()) return;
+		Command c = redoStack.pop();
+		c.execute();
+		System.out.println("MODEL size = " + model.getShapes().size());
+		undoStack.push(c);
+		view.repaint();
+		notifyObservers();
+	}
+	
+	public boolean undoPosible() {
+		return !undoStack.isEmpty();
+	}
+	public boolean redoPosible() {
+		return !redoStack.isEmpty();
+	}
+	
+	@Override
+	public void addObservers(Observer o) { observers.add(o); }
 
 	@Override
-	public void addObservers(Observer o) {
-		// TODO Auto-generated method stub
-		observers.add(o);
-	}
-
-	@Override
-	public void removeObservers(Observer o) {
-		// TODO Auto-generated method stub
-		observers.remove(o);
-	}
+	public void removeObservers(Observer o) { observers.remove(o); }
 
 	@Override
 	public void notifyObservers() {
-		// TODO Auto-generated method stub
 		for (Observer o : observers) {
 			o.update();
 		}
-		
 	}
 
-	public Color getInnerColor() {
-		return innerColor;
-	}
+	public Color getInnerColor() { return innerColor; }
 
 	public void setInnerColor(Color c) {
 		innerColor = c;
 		System.out.print(innerColor);
 	}
 
-	public Color getOutlineColor() {
-		return outlineColor;
-	}
+	public Color getOutlineColor() { return outlineColor; }
 
 	public void setOutlineColor(Color c) {
 		outlineColor = c;
