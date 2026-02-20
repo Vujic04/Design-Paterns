@@ -14,6 +14,7 @@ import command.UpdateCircleCmd;
 import command.UpdateDonutCmd;
 import command.UpdateHexagonAdapterCmd;
 import command.UpdateLineCmd;
+import command.UpdateMoveZCmd;
 import command.UpdatePointCmd;
 import command.UpdateRectangleCmd;
 import command.UpdateSelectionCmd;
@@ -266,25 +267,8 @@ public class Controller extends MouseAdapter implements Observable{
 		return null;
 	}
 	
-	
-	/*public void selectShapes (int x, int y) {
-		Shape topMost = findTopMostAt(x,y);
-		
-		if(topMost==null) {
-			clearSelection();
-			notifyObservers();
-			return;
-		}
-		
-		if(selectedShapes.contains(topMost)) {
-			topMost.setSelected(false);
-			selectedShapes.remove(topMost);
-		}else {
-			topMost.setSelected(true);
-			selectedShapes.add(topMost);
-		}
-		notifyObservers();
-	}	*/
+
+
 	public void selectShapes(int x, int y) {
 	    java.util.List<Shape> before = snapshotSelection();
 
@@ -400,7 +384,6 @@ public class Controller extends MouseAdapter implements Observable{
             executeCommand(new UpdateHexagonAdapterCmd(h, after));
             item.setSelected(true);
         } 
-		//clearSelection();
 		tool=Tool.SELECT;
 		view.repaint();
 		return true;
@@ -463,6 +446,33 @@ public class Controller extends MouseAdapter implements Observable{
 	public void setOutlineColor(Color c) {
 		outlineColor = c;
 		System.out.print(outlineColor);
+	}
+	
+	public void toFront() {
+		Shape s = getSelectedShape();
+		if (s==null) return;
+		int i = model.indexOf(s);
+		executeCommand(new UpdateMoveZCmd(model, s, i + 1));
+	}
+	
+	public void toBack() {
+		Shape s = getSelectedShape();
+		if (s==null) return;
+		int i = model.indexOf(s);
+		executeCommand(new UpdateMoveZCmd(model, s, i - 1));
+	}
+	
+	public void bringToFront() {
+		Shape s = getSelectedShape();
+		if (s==null) return;
+		int i = model.getShapes().size() - 1;
+		executeCommand(new UpdateMoveZCmd(model, s, i));
+	}
+	
+	public void bringToBack() {
+		Shape s = getSelectedShape();
+		if (s==null) return;
+		executeCommand(new UpdateMoveZCmd(model, s, 0));
 	}
 	
 }
