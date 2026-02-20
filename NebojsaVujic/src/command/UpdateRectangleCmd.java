@@ -1,5 +1,6 @@
 package command;
 
+import controller.ShapeFormat;
 import geometry.Rectangle;
 
 public class UpdateRectangleCmd implements Command {
@@ -24,6 +25,14 @@ public class UpdateRectangleCmd implements Command {
 	@Override
 	public void unexecute() {
 		rectangle.applyFrom(original);
+	}
+	@Override
+	public String getLogText() {
+		return "MODIFY  " + ShapeFormat.describeShape(original) + " -> " + ShapeFormat.describeShape(newState);
+	}
+	@Override
+	public String getUndoLogText() {
+		return "UNDO MODIFY  " + ShapeFormat.describeShape(newState) + " -> " + ShapeFormat.describeShape(original);
 	}
 
 }

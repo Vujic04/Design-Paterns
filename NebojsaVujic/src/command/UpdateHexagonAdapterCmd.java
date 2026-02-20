@@ -1,5 +1,6 @@
 package command;
 
+import controller.ShapeFormat;
 import hexagonAdapter.HexagonAdapter;
 
 public class UpdateHexagonAdapterCmd implements Command {
@@ -28,5 +29,17 @@ public class UpdateHexagonAdapterCmd implements Command {
 	public void unexecute() {
 		hexagon.applyFrom(original);
 	}
+
+
+
+	@Override
+	public String getLogText() {
+		return "MODIFY  " + ShapeFormat.describeShape(original) + " -> " + ShapeFormat.describeShape(newState);
+	}
+
+
+	@Override
+	public String getUndoLogText() {
+		return "UNDO MODIFY  " + ShapeFormat.describeShape(newState) + " -> " + ShapeFormat.describeShape(original);	}
 
 }

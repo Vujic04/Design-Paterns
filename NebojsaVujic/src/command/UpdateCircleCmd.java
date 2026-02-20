@@ -1,5 +1,6 @@
 package command;
 
+import controller.ShapeFormat;
 import geometry.Circle;
 
 public class UpdateCircleCmd implements Command {
@@ -26,6 +27,18 @@ public class UpdateCircleCmd implements Command {
 	@Override
 	public void unexecute() {
 		circle.applyFrom(original);
+	}
+
+
+	@Override
+	public String getLogText() {
+		return "MODIFY  " + ShapeFormat.describeShape(original) + " -> " + ShapeFormat.describeShape(newState);
+	}
+
+
+	@Override
+	public String getUndoLogText() {
+		return "UNDO MODIFY  " + ShapeFormat.describeShape(newState) + " -> " + ShapeFormat.describeShape(original);
 	}
 
 }

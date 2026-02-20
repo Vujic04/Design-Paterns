@@ -1,5 +1,6 @@
 package command;
 
+import controller.ShapeFormat;
 import geometry.Shape;
 import model.DrawingModel;
 
@@ -22,6 +23,20 @@ public class RemoveShapeCmd implements Command {
 	@Override
 	public void unexecute() {
 		model.addShape(shape);
+	}
+
+
+
+	@Override
+	public String getLogText() {
+		return "DELETE " + ShapeFormat.describeShape(shape);
+	}
+
+
+
+	@Override
+	public String getUndoLogText() {
+		return "UNDO DELETE " + ShapeFormat.describeShape(shape);
 	}
 
 }

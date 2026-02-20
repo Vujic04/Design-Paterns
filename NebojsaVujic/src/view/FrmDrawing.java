@@ -4,6 +4,7 @@ package view;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.border.EmptyBorder;
 
 import Observer.Observer;
@@ -15,6 +16,7 @@ import javax.swing.JButton;
 import javax.swing.JColorChooser;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 
@@ -23,6 +25,7 @@ import javax.swing.JLabel;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
+import javax.swing.JTextArea;
 
 
 public class FrmDrawing extends JFrame implements Observer{
@@ -40,6 +43,8 @@ public class FrmDrawing extends JFrame implements Observer{
 	private JButton btnToBack;
 	private JButton btnBringToBack;
 	private JButton btnBringToFront;
+	private JTextArea txtLog;
+	private JScrollPane spLog;
 
 
 
@@ -56,6 +61,16 @@ public class FrmDrawing extends JFrame implements Observer{
 
 		setContentPane(contentPane);
 		contentPane.setLayout(new BorderLayout(0, 0));
+		
+		txtLog = new JTextArea();
+		txtLog.setEditable(false);
+		txtLog.setLineWrap(true);
+		txtLog.setWrapStyleWord(true);
+
+		spLog = new JScrollPane(txtLog);
+		spLog.setPreferredSize(new Dimension(260, 0)); 
+
+		contentPane.add(spLog, BorderLayout.EAST);
 
 
 		pnlDrawing.setBackground(Color.WHITE);
@@ -69,7 +84,7 @@ public class FrmDrawing extends JFrame implements Observer{
 				GridBagLayout gbl_northPanel = new GridBagLayout();
 				gbl_northPanel.columnWidths = new int[]{96, 96, 96, 96, 0, 0, 94, 0};
 				gbl_northPanel.rowHeights = new int[]{21, 21, 0};
-				gbl_northPanel.columnWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
+				gbl_northPanel.columnWeights = new double[]{1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, Double.MIN_VALUE};
 				gbl_northPanel.rowWeights = new double[]{0.0, 0.0, Double.MIN_VALUE};
 				northPanel.setLayout(gbl_northPanel);
 				
@@ -330,7 +345,6 @@ public class FrmDrawing extends JFrame implements Observer{
 
 	@Override
 	public void update() {
-		// TODO Auto-generated method stub
 		int count = controller.getSelectionCount();
         btnDelete.setEnabled(count > 0);   
         btnModify.setEnabled(count == 1);  
@@ -340,6 +354,13 @@ public class FrmDrawing extends JFrame implements Observer{
     	btnToBack.setEnabled(count==1);
     	btnBringToBack.setEnabled(count==1);
     	btnBringToFront.setEnabled(count==1);
+    	
+    	StringBuilder sb = new StringBuilder();
+        for (String s : controller.getLog()) {
+            sb.append(s).append("\n");
+        }
+        txtLog.setText(sb.toString());
+        txtLog.setCaretPosition(txtLog.getDocument().getLength()); 
        	
 	}
 

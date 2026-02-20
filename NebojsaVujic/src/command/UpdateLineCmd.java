@@ -27,4 +27,14 @@ public class UpdateLineCmd implements Command {
 		line.applyFrom(original);
 	}
 
+	@Override
+	public String getLogText() {
+		return "UPDATE LINE " + original.toString() + " -> " + newState.toString();
+	}
+
+	@Override
+	public String getUndoLogText() {
+		return "UNDO UPDATE LINE " + newState.toString() + " -> " + original.toString();
+	}
+
 }

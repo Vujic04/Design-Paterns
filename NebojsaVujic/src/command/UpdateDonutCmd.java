@@ -1,5 +1,6 @@
 package command;
 
+import controller.ShapeFormat;
 import geometry.Donut;
 
 public class UpdateDonutCmd implements Command {
@@ -25,6 +26,14 @@ public class UpdateDonutCmd implements Command {
 	@Override
 	public void unexecute() {
 		donut.applyFrom(original);
+	}
+	@Override
+	public String getLogText() {
+		return "MODIFY  " + ShapeFormat.describeShape(original) + " -> " + ShapeFormat.describeShape(newState);
+	}
+	@Override
+	public String getUndoLogText() {
+		return "MODIFY  " + ShapeFormat.describeShape(newState) + " -> " + ShapeFormat.describeShape(original);
 	}
 
 }

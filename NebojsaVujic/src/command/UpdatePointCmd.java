@@ -1,5 +1,6 @@
 package command;
 
+import controller.ShapeFormat;
 import geometry.Point;
 
 public class UpdatePointCmd implements Command{
@@ -25,6 +26,16 @@ public class UpdatePointCmd implements Command{
 	@Override
 	public void unexecute() {
 		point.applyForm(original);
+	}
+
+	@Override
+	public String getLogText() {
+		return "MODIFY  " + ShapeFormat.describeShape(original) + " -> " + ShapeFormat.describeShape(newState);
+	}
+
+	@Override
+	public String getUndoLogText() {
+		return "UNDO MODIFY  " + ShapeFormat.describeShape(newState) + " -> " + ShapeFormat.describeShape(original);
 	}
 	
 }

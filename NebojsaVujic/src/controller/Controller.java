@@ -97,6 +97,17 @@ public class Controller extends MouseAdapter implements Observable{
 	public int getSelectionCount() { return selectedShapes.size(); }
 	
 
+	private final java.util.List<String> log = new java.util.ArrayList<>();
+
+	public java.util.List<String> getLog() {
+	    return java.util.Collections.unmodifiableList(log);
+	}
+
+	private void addLog(String entry) {
+	    log.add(entry);
+	    notifyObservers();
+	}
+	
 	public void deleteSelected() {
 		
 		if(selectedShapes.isEmpty()) {
@@ -271,7 +282,8 @@ public class Controller extends MouseAdapter implements Observable{
 
 	public void selectShapes(int x, int y) {
 	    java.util.List<Shape> before = snapshotSelection();
-
+	    boolean nowSelected = false;
+	    
 	    Shape topMost = findTopMostAt(x, y);
 	    java.util.List<Shape> after = new java.util.ArrayList<>(before);
 
@@ -280,11 +292,15 @@ public class Controller extends MouseAdapter implements Observable{
 	    } else {
 	        if (after.contains(topMost)) {
 	        	after.remove(topMost);
+	        	nowSelected = false;
 	        }
-	        else after.add(topMost);
+	        else {
+	        	after.add(topMost);
+	        	nowSelected = true;
+	        }
 	    }
 
-	    executeCommand(new UpdateSelectionCmd(this, before, after));
+	    executeCommand(new UpdateSelectionCmd(this, before, after, topMost, nowSelected));
 	}
 
 	
@@ -392,7 +408,9 @@ public class Controller extends MouseAdapter implements Observable{
 		c.execute();
 		undoStack.push(c);
 		redoStack.clear();
+		addLog(c.getLogText());
 		view.repaint();
+		notifyObservers();
 	}
 	public void undo() {
 		if(undoStack.isEmpty()) return;
@@ -400,6 +418,7 @@ public class Controller extends MouseAdapter implements Observable{
 		c.unexecute();
 		System.out.println("MODEL size = " + model.getShapes().size());
 		redoStack.push(c);
+		addLog(c.getUndoLogText());
 		view.repaint();
 		notifyObservers();
 	}
@@ -410,6 +429,7 @@ public class Controller extends MouseAdapter implements Observable{
 		c.execute();
 		System.out.println("MODEL size = " + model.getShapes().size());
 		undoStack.push(c);
+		addLog("REDO " + c.getLogText());
 		view.repaint();
 		notifyObservers();
 	}
