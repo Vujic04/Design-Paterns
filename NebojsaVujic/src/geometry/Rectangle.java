@@ -89,7 +89,7 @@ public class Rectangle extends Shape {
 		if (obj instanceof Rectangle) {
 			Rectangle pomocna = (Rectangle) obj;
 			
-			if(this.upperLeftPoint == pomocna.upperLeftPoint &&
+			if(this.upperLeftPoint.equals(pomocna.upperLeftPoint)  &&
 					this.width == pomocna.width 
 					&& this.height == pomocna.height)
 				return true;

@@ -33,11 +33,11 @@ public class UpdateMoveZCmd implements Command {
 
 		@Override
 		public String getLogText() {
-		    return "MOVE Z " + ShapeFormat.describeShape(shape) + " toIndex=" + oldIndex;
+		    return "MOVE Z " + ShapeFormat.describeShape(shape) + " toIndex=" + newIndex;
 		}
 
 		@Override
 		public String getUndoLogText() {
-			return "UNDO MOVE Z " + ShapeFormat.describeShape(shape) + " toIndex=" + newIndex;
+			return "UNDO MOVE Z " + ShapeFormat.describeShape(shape) + " toIndex=" + oldIndex;
 		}
 }

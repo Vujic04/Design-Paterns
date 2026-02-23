@@ -70,8 +70,8 @@ public class Line extends Shape {
 	public boolean equals(Object obj) {
 		if(obj instanceof Line) {
 			Line pomocna = (Line)obj;
-			if (this.startPoint == pomocna.startPoint &&
-					this.endPoint == pomocna.endPoint)
+			if (this.startPoint.equals(pomocna.startPoint) &&
+					this.endPoint.equals(pomocna.endPoint))
 				return true;
 			else 
 				return false;

@@ -14,13 +14,20 @@ import controller.Controller.Tool;
 import java.awt.BorderLayout;
 import javax.swing.JButton;
 import javax.swing.JColorChooser;
+import javax.swing.JFileChooser;
 
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.awt.event.ActionEvent;
 
 import model.DrawingModel;
+import strategy.LoadDrawingStrategy;
+import strategy.LoadLogStrategy;
+import strategy.SaveDrawingStrategy;
+import strategy.SaveLogStrategy;
+
 import javax.swing.JLabel;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
@@ -328,6 +335,76 @@ public class FrmDrawing extends JFrame implements Observer{
 		
 		btnDelete.setForeground(Color.WHITE);
 		btnDelete.setBackground(Color.RED);
+		
+		JButton btnSaveLog = new JButton("Save log");
+		btnSaveLog.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser fc = new JFileChooser();
+			    if (fc.showSaveDialog(FrmDrawing.this) == JFileChooser.APPROVE_OPTION) {
+			        File f = fc.getSelectedFile();
+			        try {
+			            new SaveLogStrategy(controller.getLog()).save(f);
+			            JOptionPane.showMessageDialog(FrmDrawing.this, "Log saved.");
+			        } catch (Exception ex) {
+			            JOptionPane.showMessageDialog(FrmDrawing.this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+			        }
+			    }
+			}
+		});
+		panel.add(btnSaveLog);
+		
+		JButton btnSaveDrawing = new JButton("Save drawing");
+		btnSaveDrawing.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser fc = new JFileChooser();
+			    if (fc.showSaveDialog(FrmDrawing.this) == JFileChooser.APPROVE_OPTION) {
+			        File f = fc.getSelectedFile();
+			        try {
+			            new SaveDrawingStrategy(model.getShapesCopy()).save(f);
+			            JOptionPane.showMessageDialog(FrmDrawing.this, "Drawing saved.");
+			        } catch (Exception ex) {
+			            JOptionPane.showMessageDialog(FrmDrawing.this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+			        }
+			    }
+			}
+		});
+		panel.add(btnSaveDrawing);
+		
+		JButton btnOpenLog = new JButton("Open log");
+		btnOpenLog.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser fc = new JFileChooser();
+			    if (fc.showOpenDialog(FrmDrawing.this) == JFileChooser.APPROVE_OPTION) {
+			        File f = fc.getSelectedFile();
+			        try {
+			            new LoadLogStrategy(controller, FrmDrawing.this).load(f);
+			        } catch (Exception ex) {
+			            JOptionPane.showMessageDialog(FrmDrawing.this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+			        }
+			    }
+			}
+		});
+		panel.add(btnOpenLog);
+		
+		JButton btnOpenDrawing = new JButton("OpenDrawing");
+		btnOpenDrawing.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser fc = new JFileChooser();
+			    if (fc.showOpenDialog(FrmDrawing.this) == JFileChooser.APPROVE_OPTION) {
+			        File f = fc.getSelectedFile();
+			        try {
+			            new LoadDrawingStrategy(model).load(f);
+
+			            controller.clearSelection();      
+			            pnlDrawing.repaint();             
+			            update();                         
+			        } catch (Exception ex) {
+			            JOptionPane.showMessageDialog(FrmDrawing.this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+			        }
+			    }
+			}
+		});
+		panel.add(btnOpenDrawing);
 		btnInnerColor.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				Color c =JColorChooser.showDialog(FrmDrawing.this, "Choose inner color", controller.getInnerColor());

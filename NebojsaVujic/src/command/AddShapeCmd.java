@@ -1,15 +1,8 @@
 package command;
 
-import java.awt.Color;
 
 import controller.ShapeFormat;
-import geometry.Circle;
-import geometry.Donut;
-import geometry.Line;
-import geometry.Point;
-import geometry.Rectangle;
 import geometry.Shape;
-import hexagonAdapter.HexagonAdapter;
 import model.DrawingModel;
 
 public class AddShapeCmd implements Command {

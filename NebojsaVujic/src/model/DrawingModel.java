@@ -15,8 +15,17 @@ public class DrawingModel {
         return Collections.unmodifiableList(shapes);
     }
 	
+	public java.util.List<Shape> getShapesCopy() {
+	    return new java.util.ArrayList<>(shapes);
+	}
+	
 	public void addShape(Shape s) {
 		shapes.add(s);
+	}
+	
+	public void clearAll() {
+		shapes.clear();
+		selectedShape=null;
 	}
 	
 	public void removeShape(Shape s) {

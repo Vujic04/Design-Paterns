@@ -123,6 +123,153 @@ public class Controller extends MouseAdapter implements Observable{
 		}
 		notifyObservers();
 	}
+	public void clearAllForLoad() {
+	    clearSelection();
+	    model.clearAll();
+	    undoStack.clear();
+	    redoStack.clear();
+	    log.clear();
+	    view.repaint();
+	    notifyObservers();
+	}
+	
+	public Command parseLogLineToCommand(String line) {
+	    line = line.trim();
+	    if (line.isEmpty()) return null;
+
+	    if (line.startsWith("UNDO ")) return null;
+	    if (line.startsWith("REDO ")) return null;
+
+
+	    if (line.equals("CLEAR SELECTION")) {
+	        return new command.UpdateSelectionCmd(this, snapshotSelection(), java.util.List.of(), null, false);
+	    }
+
+
+	    if (line.startsWith("SELECT ") || line.startsWith("DESELECT ")) {
+	        boolean select = line.startsWith("SELECT ");
+	        String shapeDesc = line.substring(select ? 7 : 9);
+	        int idx = shapeDesc.lastIndexOf(" (count=");
+	        if (idx != -1) shapeDesc = shapeDesc.substring(0, idx);
+
+	        Shape clicked = ShapeFormat.parseShape(shapeDesc);
+	        Shape existing = findMatchingInModel(clicked);
+	        if (existing == null) return null;
+
+	        var before = snapshotSelection();
+	        var after = new java.util.ArrayList<>(before);
+	        boolean nowSelected;
+
+	        if (after.contains(existing)) {
+	            after.remove(existing);
+	            nowSelected = false;
+	        } else {
+	            after.add(existing);
+	            nowSelected = true;
+	        }
+	        return new command.UpdateSelectionCmd(this, before, after, existing, nowSelected);
+	    }
+
+
+	    if (line.startsWith("ADD ")) {
+	        String shapeDesc = line.substring(4);
+	        Shape s = ShapeFormat.parseShape(shapeDesc);
+	        return new command.AddShapeCmd(model, s);
+	    }
+
+
+	    if (line.startsWith("DELETE ")) {
+	        String shapeDesc = line.substring(7);
+	        Shape s = ShapeFormat.parseShape(shapeDesc);
+	        Shape existing = findMatchingInModel(s);
+	        if (existing == null) return null;
+	        return new command.RemoveShapeCmd(model, existing);
+	    }
+
+
+	    if (line.startsWith("MOVE Z ")) {
+	        String rest = line.substring(7);
+	        int p = rest.lastIndexOf(" toIndex=");
+	        if (p == -1) return null;
+
+	        String shapeDesc = rest.substring(0, p);
+	        int toIndex = Integer.parseInt(rest.substring(p + " toIndex=".length()));
+
+	        Shape s = ShapeFormat.parseShape(shapeDesc);
+	        Shape existing = findMatchingInModel(s);
+	        if (existing == null) return null;
+
+	        return new command.UpdateMoveZCmd(model, existing, toIndex);
+	    }
+
+
+	    if (line.startsWith("MODIFY")) {
+	        String rest = line.substring("MODIFY".length()).trim();
+	        String[] parts = rest.split("->");
+	        if (parts.length != 2) return null;
+
+	        String beforeDesc = parts[0].trim();
+	        String afterDesc = parts[1].trim();
+
+	        Shape before = ShapeFormat.parseShape(beforeDesc);
+	        Shape after = ShapeFormat.parseShape(afterDesc);
+
+	        Shape target = findMatchingInModel(before);
+	        if (target == null) return null;
+
+
+	        if (target instanceof Point p && after instanceof Point ap)
+	            return new command.UpdatePointCmd(p, ap);
+	        if (target instanceof Line l && after instanceof Line al)
+	            return new command.UpdateLineCmd(l, al);
+	        if (target instanceof Circle c && after instanceof Circle ac)
+	            return new command.UpdateCircleCmd(c, ac);
+	        if (target instanceof Rectangle r && after instanceof Rectangle ar)
+	            return new command.UpdateRectangleCmd(r, ar);
+	        if (target instanceof Donut d && after instanceof Donut ad)
+	            return new command.UpdateDonutCmd(d, ad);
+	        if (target instanceof HexagonAdapter h && after instanceof HexagonAdapter ah)
+	            return new command.UpdateHexagonAdapterCmd(h, ah);
+
+	        return null;
+	    }
+
+	    return null;
+	}
+	
+	private Shape findMatchingInModel(Shape needle) {
+	    for (Shape s : model.getShapes()) {
+	        if (s.equals(needle)) return s;
+	    }
+	    return null;
+	}
+	
+	public void executeCommandFromLoad(Command c) {
+	    c.execute();
+	    undoStack.push(c);
+	    redoStack.clear();
+	    appendLogLine(c.getLogText());
+	    view.repaint();
+	    notifyObservers();
+	}
+
+	public void undoFromLoad() {
+	    if (undoStack.isEmpty()) return;
+	    Command c = undoStack.pop();
+	    c.unexecute();
+	    redoStack.push(c);
+	    view.repaint();
+	    notifyObservers();
+	}
+
+	public void redoFromLoad() {
+	    if (redoStack.isEmpty()) return;
+	    Command c = redoStack.pop();
+	    c.execute();
+	    undoStack.push(c);
+	    view.repaint();
+	    notifyObservers();
+	}
 
 
 	@Override
@@ -404,6 +551,12 @@ public class Controller extends MouseAdapter implements Observable{
 		view.repaint();
 		return true;
 	}
+	
+	public void appendLogLine(String s) {
+	    log.add(s);         
+	    notifyObservers();   
+	}
+	
 	private void executeCommand(Command c) {
 		c.execute();
 		undoStack.push(c);
