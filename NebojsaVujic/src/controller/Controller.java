@@ -1,4 +1,5 @@
 package controller;
+
 import java.awt.Color;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -34,49 +35,37 @@ import view.PnlDrawing;
 import view.PointDlg;
 import view.RectangleDlg;
 
+public class Controller extends MouseAdapter implements Observable {
 
-
-public class Controller extends MouseAdapter implements Observable{
-	
 	public enum Tool {
-	    POINT, LINE, CIRCLE, RECTANGLE, DONUT, SELECT, HEXAGON
+		POINT, LINE, CIRCLE, RECTANGLE, DONUT, SELECT, HEXAGON
 	}
-	
+
 	private final DrawingModel model;
 	private final PnlDrawing view;
 	private Point startPoint;
 	private Point endPoint;
 	private Tool tool = Tool.SELECT;
+
+	private Color innerColor = Color.GRAY;
+	private Color outlineColor = Color.BLACK;
 	
-	private Color innerColor=Color.GRAY;
-	private Color outlineColor=Color.BLACK;
-	
+	//region lists and stacks
 	private final java.util.List<Shape> selectedShapes = new java.util.ArrayList<Shape>();
-	
 	private final List<Observer> observers = new ArrayList<>();
-	
-	private final java.util.Stack<command.Command>undoStack= new java.util.Stack<>();
-	private final java.util.Stack<command.Command>redoStack= new java.util.Stack<>();
+	private final java.util.List<String> log = new java.util.ArrayList<>();
+
+	private final java.util.Stack<command.Command> undoStack = new java.util.Stack<>();
+	private final java.util.Stack<command.Command> redoStack = new java.util.Stack<>();
+	//endregion
 	
 	public java.util.List<Shape> snapshotSelection() {
-	    return new java.util.ArrayList<>(selectedShapes);
+		return new java.util.ArrayList<>(selectedShapes);
 	}
 	
-	public void applySelection(java.util.List<Shape> select) {
-		for(Shape s : model.getShapes()) {
-			s.setSelected(false);
-		}
-		selectedShapes.clear();
-		
-		for(Shape s : select) {
-			s.setSelected(true);
-			selectedShapes.add(s);
-		}
-		notifyObservers();
-		view.repaint();
+	public java.util.List<String> getLog() {
+		return java.util.Collections.unmodifiableList(log);
 	}
-
-
 	
 
 	public Controller(DrawingModel model, PnlDrawing view) {
@@ -84,240 +73,56 @@ public class Controller extends MouseAdapter implements Observable{
 		this.view = view;
 		view.addMouseListener(this);
 	}
-	
-	public void setTool(Tool tool) {
-        this.tool = tool;
-        System.out.println("SET TOOL -> " + this.tool);
-    }
-	
-	public Shape getSelectedShape() { return selectedShapes.size() == 1 ? selectedShapes.get(0) : null; }
-	
-	public boolean hasSelection() { return !selectedShapes.isEmpty(); }
-
-	public int getSelectionCount() { return selectedShapes.size(); }
-	
-
-	private final java.util.List<String> log = new java.util.ArrayList<>();
-
-	public java.util.List<String> getLog() {
-	    return java.util.Collections.unmodifiableList(log);
-	}
-
-	private void addLog(String entry) {
-	    log.add(entry);
-	    notifyObservers();
-	}
-	
-	public void deleteSelected() {
-		
-		if(selectedShapes.isEmpty()) {
-			return;
-		}
-		
-		java.util.List<Shape> delete = new java.util.ArrayList<>(selectedShapes); 
-		
-		clearSelection();
-		
-		for(Shape s : delete) {
-			executeCommand(new RemoveShapeCmd(model,s));
-		}
-		notifyObservers();
-	}
-	public void clearAllForLoad() {
-	    clearSelection();
-	    model.clearAll();
-	    undoStack.clear();
-	    redoStack.clear();
-	    log.clear();
-	    view.repaint();
-	    notifyObservers();
-	}
-	
-	public Command parseLogLineToCommand(String line) {
-	    line = line.trim();
-	    if (line.isEmpty()) return null;
-
-	    if (line.startsWith("UNDO ")) return null;
-	    if (line.startsWith("REDO ")) return null;
-
-
-	    if (line.equals("CLEAR SELECTION")) {
-	        return new command.UpdateSelectionCmd(this, snapshotSelection(), java.util.List.of(), null, false);
-	    }
-
-
-	    if (line.startsWith("SELECT ") || line.startsWith("DESELECT ")) {
-	        boolean select = line.startsWith("SELECT ");
-	        String shapeDesc = line.substring(select ? 7 : 9);
-	        int idx = shapeDesc.lastIndexOf(" (count=");
-	        if (idx != -1) shapeDesc = shapeDesc.substring(0, idx);
-
-	        Shape clicked = ShapeFormat.parseShape(shapeDesc);
-	        Shape existing = findMatchingInModel(clicked);
-	        if (existing == null) return null;
-
-	        var before = snapshotSelection();
-	        var after = new java.util.ArrayList<>(before);
-	        boolean nowSelected;
-
-	        if (after.contains(existing)) {
-	            after.remove(existing);
-	            nowSelected = false;
-	        } else {
-	            after.add(existing);
-	            nowSelected = true;
-	        }
-	        return new command.UpdateSelectionCmd(this, before, after, existing, nowSelected);
-	    }
-
-
-	    if (line.startsWith("ADD ")) {
-	        String shapeDesc = line.substring(4);
-	        Shape s = ShapeFormat.parseShape(shapeDesc);
-	        return new command.AddShapeCmd(model, s);
-	    }
-
-
-	    if (line.startsWith("DELETE ")) {
-	        String shapeDesc = line.substring(7);
-	        Shape s = ShapeFormat.parseShape(shapeDesc);
-	        Shape existing = findMatchingInModel(s);
-	        if (existing == null) return null;
-	        return new command.RemoveShapeCmd(model, existing);
-	    }
-
-
-	    if (line.startsWith("MOVE Z ")) {
-	        String rest = line.substring(7);
-	        int p = rest.lastIndexOf(" toIndex=");
-	        if (p == -1) return null;
-
-	        String shapeDesc = rest.substring(0, p);
-	        int toIndex = Integer.parseInt(rest.substring(p + " toIndex=".length()));
-
-	        Shape s = ShapeFormat.parseShape(shapeDesc);
-	        Shape existing = findMatchingInModel(s);
-	        if (existing == null) return null;
-
-	        return new command.UpdateMoveZCmd(model, existing, toIndex);
-	    }
-
-
-	    if (line.startsWith("MODIFY")) {
-	        String rest = line.substring("MODIFY".length()).trim();
-	        String[] parts = rest.split("->");
-	        if (parts.length != 2) return null;
-
-	        String beforeDesc = parts[0].trim();
-	        String afterDesc = parts[1].trim();
-
-	        Shape before = ShapeFormat.parseShape(beforeDesc);
-	        Shape after = ShapeFormat.parseShape(afterDesc);
-
-	        Shape target = findMatchingInModel(before);
-	        if (target == null) return null;
-
-
-	        if (target instanceof Point p && after instanceof Point ap)
-	            return new command.UpdatePointCmd(p, ap);
-	        if (target instanceof Line l && after instanceof Line al)
-	            return new command.UpdateLineCmd(l, al);
-	        if (target instanceof Circle c && after instanceof Circle ac)
-	            return new command.UpdateCircleCmd(c, ac);
-	        if (target instanceof Rectangle r && after instanceof Rectangle ar)
-	            return new command.UpdateRectangleCmd(r, ar);
-	        if (target instanceof Donut d && after instanceof Donut ad)
-	            return new command.UpdateDonutCmd(d, ad);
-	        if (target instanceof HexagonAdapter h && after instanceof HexagonAdapter ah)
-	            return new command.UpdateHexagonAdapterCmd(h, ah);
-
-	        return null;
-	    }
-
-	    return null;
-	}
-	
-	private Shape findMatchingInModel(Shape needle) {
-	    for (Shape s : model.getShapes()) {
-	        if (s.equals(needle)) return s;
-	    }
-	    return null;
-	}
-	
-	public void executeCommandFromLoad(Command c) {
-	    c.execute();
-	    undoStack.push(c);
-	    redoStack.clear();
-	    appendLogLine(c.getLogText());
-	    view.repaint();
-	    notifyObservers();
-	}
-
-	public void undoFromLoad() {
-	    if (undoStack.isEmpty()) return;
-	    Command c = undoStack.pop();
-	    c.unexecute();
-	    redoStack.push(c);
-	    view.repaint();
-	    notifyObservers();
-	}
-
-	public void redoFromLoad() {
-	    if (redoStack.isEmpty()) return;
-	    Command c = redoStack.pop();
-	    c.execute();
-	    undoStack.push(c);
-	    view.repaint();
-	    notifyObservers();
-	}
-
 
 	@Override
 	public void mouseClicked(MouseEvent e) {
-	    int x = e.getX();
-	    int y = e.getY();
+		int x = e.getX();
+		int y = e.getY();
 
-	    System.out.println("CLICK tool=" + tool + " x=" + x + " y=" + y);
+		switch (tool) {
+		case POINT -> addPoint(x, y);
+		case LINE -> addLine(x, y);
+		case CIRCLE -> addCircle(x, y);
+		case RECTANGLE -> addRectangle(x, y);
+		case DONUT -> addDonut(x, y);
+		case HEXAGON -> addHexagon(x, y);
+		case SELECT -> selectShapes(x, y);
+		}
 
-	    switch (tool) {
-	        case POINT -> addPoint(x, y);
-	        case LINE -> addLine(x, y);
-	        case CIRCLE -> addCircle(x, y);
-	        case RECTANGLE -> addRectangle(x, y);
-	        case DONUT -> addDonut(x, y);
-	        case HEXAGON -> addHexagon(x, y);
-	        case SELECT -> selectShapes(x, y);
-	    }
-
-	    view.repaint();
+		view.repaint();
 	}
 
+	public void setTool(Tool tool) {
+		this.tool = tool;
+	}
 	
-	public void addPoint (int x, int y) {
+	//region adding shapes
+	public void addPoint(int x, int y) {
 		PointDlg dialog = new PointDlg();
 		dialog.regularTextFields();
 		dialog.setTextFieldForX(x);
 		dialog.setTextFieldForY(y);
 		dialog.setVisible(true);
 
-		if(dialog.isConfirmed()) {
-			Color c=dialog.getSelectedColor();
-			if (c == null) c = getOutlineColor();
-			Point point = new Point (x,y,false,c);
-			executeCommand(new AddShapeCmd(model,point));
+		if (dialog.isConfirmed()) {
+			Color c = dialog.getSelectedColor();
+			if (c == null)
+				c = getOutlineColor();
+			Point point = new Point(x, y, false, c);
+			executeCommand(new AddShapeCmd(model, point));
 		}
-		
-		tool=Tool.SELECT;
+
+		tool = Tool.SELECT;
 	}
-	
-	public void addLine (int x, int y) {
-		if(startPoint==null) {
-			startPoint = new Point (x,y);
+
+	public void addLine(int x, int y) {
+		if (startPoint == null) {
+			startPoint = new Point(x, y);
 			return;
 		}
-		
-		if(endPoint==null) {
-			endPoint= new Point (x,y);
+
+		if (endPoint == null) {
+			endPoint = new Point(x, y);
 			LineDlg dialog = new LineDlg();
 			dialog.setTextFieldForX1(startPoint.getXCoordinate());
 			dialog.setTextFieldForY1(startPoint.getYCoordinate());
@@ -326,18 +131,18 @@ public class Controller extends MouseAdapter implements Observable{
 			dialog.regularTextFields();
 			dialog.setColor(getOutlineColor());
 			dialog.setVisible(true);
-			
-			if(dialog.isConfirmed()) {
-				Line line = new Line (startPoint, endPoint, false, dialog.getSelectedColor());
-				executeCommand(new AddShapeCmd(model,line));
+
+			if (dialog.isConfirmed()) {
+				Line line = new Line(startPoint, endPoint, false, dialog.getSelectedColor());
+				executeCommand(new AddShapeCmd(model, line));
 			}
-			startPoint=null;
-			endPoint=null;
+			startPoint = null;
+			endPoint = null;
 			tool = Tool.SELECT;
 		}
 	}
-	
-	public void addCircle(int x,int y) {
+
+	public void addCircle(int x, int y) {
 		CircleDlg dialog = new CircleDlg();
 		dialog.setTextFieldForX(x);
 		dialog.setTextFieldForY(y);
@@ -345,16 +150,16 @@ public class Controller extends MouseAdapter implements Observable{
 		dialog.setOutlineColor(getOutlineColor());
 		dialog.setInnerColor(getInnerColor());
 		dialog.setVisible(true);
-		
-		if(dialog.isConfirmed()) {
+
+		if (dialog.isConfirmed()) {
 			int radius = dialog.getRadius();
-			Point center = new Point (x,y);
-			Circle circle = new Circle (center, radius, false, dialog.getOutlineColor(), dialog.getInnerColor());
-			executeCommand(new AddShapeCmd(model,circle));
+			Point center = new Point(x, y);
+			Circle circle = new Circle(center, radius, false, dialog.getOutlineColor(), dialog.getInnerColor());
+			executeCommand(new AddShapeCmd(model, circle));
 		}
 		tool = Tool.SELECT;
 	}
-	
+
 	public void addRectangle(int x, int y) {
 		RectangleDlg dialog = new RectangleDlg();
 		dialog.setTextFieldForX(x);
@@ -363,17 +168,18 @@ public class Controller extends MouseAdapter implements Observable{
 		dialog.setOutlineColor(getOutlineColor());
 		dialog.setInnerColor(getInnerColor());
 		dialog.setVisible(true);
-		
-		if(dialog.isConfirmed()) {
-			Point upperLeft = new Point(x,y);
+
+		if (dialog.isConfirmed()) {
+			Point upperLeft = new Point(x, y);
 			int height = dialog.getHeightRect();
 			int width = dialog.getWidthRect();
-			Rectangle rect = new Rectangle(upperLeft, width, height, false, dialog.getOutlineColor(), dialog.getInnerColor());
-			executeCommand(new AddShapeCmd(model,rect));
+			Rectangle rect = new Rectangle(upperLeft, width, height, false, dialog.getOutlineColor(),
+					dialog.getInnerColor());
+			executeCommand(new AddShapeCmd(model, rect));
 		}
 		tool = Tool.SELECT;
 	}
-	
+
 	public void addDonut(int x, int y) {
 		DonutDlg dialog = new DonutDlg();
 		dialog.setTextFieldForX(x);
@@ -382,18 +188,19 @@ public class Controller extends MouseAdapter implements Observable{
 		dialog.setOutlineColor(getOutlineColor());
 		dialog.setInnerColor(getInnerColor());
 		dialog.setVisible(true);
-		
+
 		if (dialog.isConfirmed()) {
-			Point center = new Point (x,y);
+			Point center = new Point(x, y);
 			int innerRadius = dialog.getInner();
 			int outerRadius = dialog.getOuter();
-			Donut donut = new Donut(center, outerRadius, innerRadius, false, dialog.getOutlineColor(), dialog.getInnerColor());
-			executeCommand(new AddShapeCmd(model,donut));
+			Donut donut = new Donut(center, outerRadius, innerRadius, false, dialog.getOutlineColor(),
+					dialog.getInnerColor());
+			executeCommand(new AddShapeCmd(model, donut));
 		}
 		tool = Tool.SELECT;
 	}
-	
-	public void addHexagon(int x,int y) {
+
+	public void addHexagon(int x, int y) {
 		HexagonDlg dialog = new HexagonDlg();
 		dialog.setTextFieldForX(x);
 		dialog.setTextFieldForY(y);
@@ -401,22 +208,22 @@ public class Controller extends MouseAdapter implements Observable{
 		dialog.setOutlineColor(getOutlineColor());
 		dialog.setInnerColor(getInnerColor());
 		dialog.setVisible(true);
-		
+
 		if (dialog.isConfirmed()) {
 			int radius = dialog.getRadius();
-			HexagonAdapter hexagon = new HexagonAdapter(x,y,radius,false,dialog.getOutlineColor(),dialog.getInnerColor());
-			executeCommand(new AddShapeCmd(model,hexagon));
+			HexagonAdapter hexagon = new HexagonAdapter(x, y, radius, false, dialog.getOutlineColor(),
+					dialog.getInnerColor());
+			executeCommand(new AddShapeCmd(model, hexagon));
 		}
 		tool = Tool.SELECT;
 		System.out.println(model.getShapes());
 	}
+	//endregion
 	
-	
-	
-	private Shape findTopMostAt(int x,int y) {
+	private Shape findTopMostAt(int x, int y) {
 		java.util.List<Shape> shapes = model.getShapes();
-		
-		for (int i=shapes.size() -  1; i>=0;i--) {
+
+		for (int i = shapes.size() - 1; i >= 0; i--) {
 			Shape s = shapes.get(i);
 			if (s.contains(x, y)) {
 				return s;
@@ -424,149 +231,176 @@ public class Controller extends MouseAdapter implements Observable{
 		}
 		return null;
 	}
-	
-
 
 	public void selectShapes(int x, int y) {
-	    java.util.List<Shape> before = snapshotSelection();
-	    boolean nowSelected = false;
-	    
-	    Shape topMost = findTopMostAt(x, y);
-	    java.util.List<Shape> after = new java.util.ArrayList<>(before);
+		java.util.List<Shape> before = snapshotSelection();
+		boolean nowSelected = false;
 
-	    if (topMost == null) {
-	        after.clear();
-	    } else {
-	        if (after.contains(topMost)) {
-	        	after.remove(topMost);
-	        	nowSelected = false;
-	        }
-	        else {
-	        	after.add(topMost);
-	        	nowSelected = true;
-	        }
-	    }
+		Shape topMost = findTopMostAt(x, y);
+		java.util.List<Shape> after = new java.util.ArrayList<>(before);
 
-	    executeCommand(new UpdateSelectionCmd(this, before, after, topMost, nowSelected));
+		if (topMost == null) {
+			after.clear();
+		} else {
+			if (after.contains(topMost)) {
+				after.remove(topMost);
+				nowSelected = false;
+			} else {
+				after.add(topMost);
+				nowSelected = true;
+			}
+		}
+
+		executeCommand(new UpdateSelectionCmd(this, before, after, topMost, nowSelected));
 	}
-
 	
 	public void clearSelection() {
-		for (Shape s: model.getShapes()) {
+		for (Shape s : model.getShapes()) {
 			s.setSelected(false);
 		}
 		selectedShapes.clear();
 		notifyObservers();
 	}
 	
+	public void deleteSelected() {
+
+		if (selectedShapes.isEmpty()) {
+			return;
+		}
+
+		java.util.List<Shape> delete = new java.util.ArrayList<>(selectedShapes);
+
+		clearSelection();
+
+		for (Shape s : delete) {
+			executeCommand(new RemoveShapeCmd(model, s));
+		}
+		notifyObservers();
+	}
+
 	public boolean modifySelected() {
-		
+
 		if (selectedShapes.size() != 1) {
 			return false;
 		}
 		Shape item = selectedShapes.get(0);
-		
+
 		if (item instanceof Point p) {
-			Point before=p.clone();
-		    
+			Point before = p.clone();
+
 			PointDlg dialog = new PointDlg();
 			dialog.modifyPoint(p);
-			
-			if(!dialog.isConfirmed()) {
+
+			if (!dialog.isConfirmed()) {
 				p.applyForm(before);
 				return false;
 			}
-			Point after=p.clone();
+			Point after = p.clone();
 			p.applyForm(before);
 			executeCommand(new UpdatePointCmd(p, after));
 			item.setSelected(true);
-			
+
 		} else if (item instanceof Line l) {
 			Line before = l.clone();
-            LineDlg dialog = new LineDlg();
-            dialog.modifyLine(l);
-            if (!dialog.isConfirmed()) {
-            	l.applyFrom(before);
-            	return false;
-            }
-            Line after =l.clone();
-            l.applyFrom(before);
-            executeCommand(new UpdateLineCmd(l, after));
-            item.setSelected(true);
+			LineDlg dialog = new LineDlg();
+			dialog.modifyLine(l);
+			if (!dialog.isConfirmed()) {
+				l.applyFrom(before);
+				return false;
+			}
+			Line after = l.clone();
+			l.applyFrom(before);
+			executeCommand(new UpdateLineCmd(l, after));
+			item.setSelected(true);
 
-        } else if (item instanceof Donut d) {
-        	Donut before =d.clone();
-            DonutDlg dialog = new DonutDlg();
-            dialog.modifyDonut(d);
-            if (!dialog.isConfirmed()) {
-            	d.applyFrom(before);
-            	return false;
-            }
-            Donut after=d.clone();
-            d.applyFrom(before);
-            executeCommand(new UpdateDonutCmd(d, after));
-            item.setSelected(true);
+		} else if (item instanceof Donut d) {
+			Donut before = d.clone();
+			DonutDlg dialog = new DonutDlg();
+			dialog.modifyDonut(d);
+			if (!dialog.isConfirmed()) {
+				d.applyFrom(before);
+				return false;
+			}
+			Donut after = d.clone();
+			d.applyFrom(before);
+			executeCommand(new UpdateDonutCmd(d, after));
+			item.setSelected(true);
 
+		} else if (item instanceof Circle c) {
+			Circle before = c.clone();
+			CircleDlg dialog = new CircleDlg();
+			dialog.modifyCircle(c);
+			;
+			if (!dialog.isConfirmed()) {
+				c.applyFrom(before);
+				return false;
+			}
+			Circle after = c.clone();
+			c.applyFrom(before);
+			executeCommand(new UpdateCircleCmd(c, after));
+			item.setSelected(true);
 
-        } else if (item instanceof Circle c) {
-        	Circle before = c.clone();
-            CircleDlg dialog = new CircleDlg();
-            dialog.modifyCircle(c);;
-            if (!dialog.isConfirmed()) {
-            	c.applyFrom(before);
-            	return false;
-            }
-            Circle after=c.clone();
-            c.applyFrom(before);
-            executeCommand(new UpdateCircleCmd(c, after));
-            item.setSelected(true);
+		} else if (item instanceof Rectangle r) {
+			Rectangle before = r.clone();
+			RectangleDlg dialog = new RectangleDlg();
+			dialog.modifyRectangle(r);
+			if (!dialog.isConfirmed()) {
+				r.applyFrom(before);
+				return false;
+			}
+			Rectangle after = r.clone();
+			r.applyFrom(before);
+			executeCommand(new UpdateRectangleCmd(r, after));
+			item.setSelected(true);
 
-        }  else if (item instanceof Rectangle r) {
-        	Rectangle before = r.clone();
-            RectangleDlg dialog = new RectangleDlg();
-            dialog.modifyRectangle(r);
-            if (!dialog.isConfirmed()) {
-            		r.applyFrom(before);
-            		return false;
-            	}
-            Rectangle after=r.clone();
-            r.applyFrom(before);
-            executeCommand(new UpdateRectangleCmd(r, after));
-            item.setSelected(true);
-
-        } else if (item instanceof HexagonAdapter h) {
-        	HexagonAdapter before=h.clone();
-            HexagonDlg dialog = new HexagonDlg();
-            dialog.modifyHexagon(h);
-            if (!dialog.isConfirmed()) { 
-            	h.applyFrom(before);
-            	return false;
-            }
-            HexagonAdapter after =h.clone();
-            h.applyFrom(before);
-            executeCommand(new UpdateHexagonAdapterCmd(h, after));
-            item.setSelected(true);
-        } 
-		tool=Tool.SELECT;
+		} else if (item instanceof HexagonAdapter h) {
+			HexagonAdapter before = h.clone();
+			HexagonDlg dialog = new HexagonDlg();
+			dialog.modifyHexagon(h);
+			if (!dialog.isConfirmed()) {
+				h.applyFrom(before);
+				return false;
+			}
+			HexagonAdapter after = h.clone();
+			h.applyFrom(before);
+			executeCommand(new UpdateHexagonAdapterCmd(h, after));
+			item.setSelected(true);
+		}
+		tool = Tool.SELECT;
 		view.repaint();
 		return true;
 	}
+
+
 	
-	public void appendLogLine(String s) {
-	    log.add(s);         
-	    notifyObservers();   
-	}
 	
-	private void executeCommand(Command c) {
-		c.execute();
-		undoStack.push(c);
+	public void clearAllForLoad() {
+		clearSelection();
+		model.clearAll();
+		undoStack.clear();
 		redoStack.clear();
-		addLog(c.getLogText());
+		log.clear();
 		view.repaint();
 		notifyObservers();
 	}
+	
+	
+	public void executeCommandFromLoad(Command c) {
+		c.execute();
+		undoStack.push(c);
+		redoStack.clear();
+		appendLogLine(c.getLogText());
+		view.repaint();
+		notifyObservers();
+	}
+	private void addLog(String entry) {
+		log.add(entry);
+		notifyObservers();
+	}
+	
 	public void undo() {
-		if(undoStack.isEmpty()) return;
+		if (undoStack.isEmpty())
+			return;
 		Command c = undoStack.pop();
 		c.unexecute();
 		System.out.println("MODEL size = " + model.getShapes().size());
@@ -575,9 +409,10 @@ public class Controller extends MouseAdapter implements Observable{
 		view.repaint();
 		notifyObservers();
 	}
-	
+
 	public void redo() {
-		if(redoStack.isEmpty()) return;
+		if (redoStack.isEmpty())
+			return;
 		Command c = redoStack.pop();
 		c.execute();
 		System.out.println("MODEL size = " + model.getShapes().size());
@@ -586,19 +421,51 @@ public class Controller extends MouseAdapter implements Observable{
 		view.repaint();
 		notifyObservers();
 	}
-	
-	public boolean undoPosible() {
-		return !undoStack.isEmpty();
+
+	public void undoFromLoad() {
+		if (undoStack.isEmpty())
+			return;
+		Command c = undoStack.pop();
+		c.unexecute();
+		redoStack.push(c);
+		view.repaint();
+		notifyObservers();
 	}
-	public boolean redoPosible() {
-		return !redoStack.isEmpty();
+
+	public void redoFromLoad() {
+		if (redoStack.isEmpty())
+			return;
+		Command c = redoStack.pop();
+		c.execute();
+		undoStack.push(c);
+		view.repaint();
+		notifyObservers();
 	}
-	
+
+	public void appendLogLine(String s) {
+		log.add(s);
+		notifyObservers();
+	}
+
+	private void executeCommand(Command c) {
+		c.execute();
+		undoStack.push(c);
+		redoStack.clear();
+		addLog(c.getLogText());
+		view.repaint();
+		notifyObservers();
+	}
+
+	//region observer
 	@Override
-	public void addObservers(Observer o) { observers.add(o); }
+	public void addObservers(Observer o) {
+		observers.add(o);
+	}
 
 	@Override
-	public void removeObservers(Observer o) { observers.remove(o); }
+	public void removeObservers(Observer o) {
+		observers.remove(o);
+	}
 
 	@Override
 	public void notifyObservers() {
@@ -606,46 +473,206 @@ public class Controller extends MouseAdapter implements Observable{
 			o.update();
 		}
 	}
-
-	public Color getInnerColor() { return innerColor; }
-
-	public void setInnerColor(Color c) {
-		innerColor = c;
-		System.out.print(innerColor);
-	}
-
-	public Color getOutlineColor() { return outlineColor; }
-
-	public void setOutlineColor(Color c) {
-		outlineColor = c;
-		System.out.print(outlineColor);
-	}
+	//endregion
 	
+	
+	//region changing position by z
 	public void toFront() {
 		Shape s = getSelectedShape();
-		if (s==null) return;
+		if (s == null)
+			return;
 		int i = model.indexOf(s);
 		executeCommand(new UpdateMoveZCmd(model, s, i + 1));
 	}
-	
+
 	public void toBack() {
 		Shape s = getSelectedShape();
-		if (s==null) return;
+		if (s == null)
+			return;
 		int i = model.indexOf(s);
 		executeCommand(new UpdateMoveZCmd(model, s, i - 1));
 	}
-	
+
 	public void bringToFront() {
 		Shape s = getSelectedShape();
-		if (s==null) return;
+		if (s == null)
+			return;
 		int i = model.getShapes().size() - 1;
 		executeCommand(new UpdateMoveZCmd(model, s, i));
 	}
-	
+
 	public void bringToBack() {
 		Shape s = getSelectedShape();
-		if (s==null) return;
+		if (s == null)
+			return;
 		executeCommand(new UpdateMoveZCmd(model, s, 0));
 	}
+	//endregion
+
+	public void applySelection(java.util.List<Shape> select) {
+		for (Shape s : model.getShapes()) {
+			s.setSelected(false);
+		}
+		selectedShapes.clear();
+
+		for (Shape s : select) {
+			s.setSelected(true);
+			selectedShapes.add(s);
+		}
+		notifyObservers();
+		view.repaint();
+	}
 	
+	private Shape findMatchingInModel(Shape needle) {
+		for (Shape s : model.getShapes()) {
+			if (s.equals(needle))
+				return s;
+		}
+		return null;
+	}
+
+	public void setInnerColor(Color c) {
+		innerColor = c;
+	}
+
+	public Color getInnerColor() {
+		return innerColor;
+	}
+
+	public void setOutlineColor(Color c) {
+		outlineColor = c;
+	}
+
+	public Color getOutlineColor() {
+		return outlineColor;
+	}
+
+	public Shape getSelectedShape() {
+		return selectedShapes.size() == 1 ? selectedShapes.get(0) : null;
+	}
+
+	public boolean hasSelection() {
+		return !selectedShapes.isEmpty();
+	}
+
+	public int getSelectionCount() {
+		return selectedShapes.size();
+	}
+
+	public boolean undoPosible() {
+		return !undoStack.isEmpty();
+	}
+
+	public boolean redoPosible() {
+		return !redoStack.isEmpty();
+	}
+
+	
+
+	public Command parseLogLineToCommand(String line) {
+		line = line.trim();
+		if (line.isEmpty())
+			return null;
+
+		if (line.startsWith("UNDO "))
+			return null;
+		if (line.startsWith("REDO "))
+			return null;
+
+		if (line.equals("CLEAR SELECTION")) {
+			return new command.UpdateSelectionCmd(this, snapshotSelection(), java.util.List.of(), null, false);
+		}
+
+		if (line.startsWith("SELECT ") || line.startsWith("DESELECT ")) {
+			boolean select = line.startsWith("SELECT ");
+			String shapeDesc = line.substring(select ? 7 : 9);
+			int idx = shapeDesc.lastIndexOf(" (count=");
+			if (idx != -1)
+				shapeDesc = shapeDesc.substring(0, idx);
+
+			Shape clicked = ShapeFormat.parseShape(shapeDesc);
+			Shape existing = findMatchingInModel(clicked);
+			if (existing == null)
+				return null;
+
+			var before = snapshotSelection();
+			var after = new java.util.ArrayList<>(before);
+			boolean nowSelected;
+
+			if (after.contains(existing)) {
+				after.remove(existing);
+				nowSelected = false;
+			} else {
+				after.add(existing);
+				nowSelected = true;
+			}
+			return new command.UpdateSelectionCmd(this, before, after, existing, nowSelected);
+		}
+
+		if (line.startsWith("ADD ")) {
+			String shapeDesc = line.substring(4);
+			Shape s = ShapeFormat.parseShape(shapeDesc);
+			return new command.AddShapeCmd(model, s);
+		}
+
+		if (line.startsWith("DELETE ")) {
+			String shapeDesc = line.substring(7);
+			Shape s = ShapeFormat.parseShape(shapeDesc);
+			Shape existing = findMatchingInModel(s);
+			if (existing == null)
+				return null;
+			return new command.RemoveShapeCmd(model, existing);
+		}
+
+		if (line.startsWith("MOVE Z ")) {
+			String rest = line.substring(7);
+			int p = rest.lastIndexOf(" toIndex=");
+			if (p == -1)
+				return null;
+
+			String shapeDesc = rest.substring(0, p);
+			int toIndex = Integer.parseInt(rest.substring(p + " toIndex=".length()));
+
+			Shape s = ShapeFormat.parseShape(shapeDesc);
+			Shape existing = findMatchingInModel(s);
+			if (existing == null)
+				return null;
+
+			return new command.UpdateMoveZCmd(model, existing, toIndex);
+		}
+
+		if (line.startsWith("MODIFY")) {
+			String rest = line.substring("MODIFY".length()).trim();
+			String[] parts = rest.split("->");
+			if (parts.length != 2)
+				return null;
+
+			String beforeDesc = parts[0].trim();
+			String afterDesc = parts[1].trim();
+
+			Shape before = ShapeFormat.parseShape(beforeDesc);
+			Shape after = ShapeFormat.parseShape(afterDesc);
+
+			Shape target = findMatchingInModel(before);
+			if (target == null)
+				return null;
+
+			if (target instanceof Point p && after instanceof Point ap)
+				return new command.UpdatePointCmd(p, ap);
+			if (target instanceof Line l && after instanceof Line al)
+				return new command.UpdateLineCmd(l, al);
+			if (target instanceof Circle c && after instanceof Circle ac)
+				return new command.UpdateCircleCmd(c, ac);
+			if (target instanceof Rectangle r && after instanceof Rectangle ar)
+				return new command.UpdateRectangleCmd(r, ar);
+			if (target instanceof Donut d && after instanceof Donut ad)
+				return new command.UpdateDonutCmd(d, ad);
+			if (target instanceof HexagonAdapter h && after instanceof HexagonAdapter ah)
+				return new command.UpdateHexagonAdapterCmd(h, ah);
+
+			return null;
+		}
+
+		return null;
+	}
 }

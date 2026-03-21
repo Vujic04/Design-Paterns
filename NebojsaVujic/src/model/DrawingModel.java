@@ -34,38 +34,7 @@ public class DrawingModel {
 		if(selectedShape==s) 
 			selectedShape=null;
 	}
-	
-	public void toFront(Shape s) {
-		if(s==null) return;
-		int i= shapes.indexOf(s);
-		if(i==-1 || i==shapes.size()-1) return;
-		shapes.remove(i);
-		shapes.add(i+1,s);
-	}
-	
-	public void toBack(Shape s) {
-		if(s==null) return;
-		int i= shapes.indexOf(s);
-		if(i<=0) return;
-		shapes.remove(i);
-		shapes.add(i-1,s);
-	}
-	
-	public void bringToFront(Shape s) {
-		if(s==null) return;
-		int i= shapes.indexOf(s);
-		if(i==-1 || i==shapes.size()-1) return;
-		shapes.remove(i);
-		shapes.add(s);
-	}
-	
-	public void bringToBack(Shape s) {
-		if(s==null) return;
-		int i= shapes.indexOf(s);
-		if(i<=0) return;
-		shapes.remove(i);
-		shapes.add(0,s);
-	}
+
 	public int indexOf(Shape s) { return shapes.indexOf(s); }
 
 	public void moveToIndex(Shape s, int index) {

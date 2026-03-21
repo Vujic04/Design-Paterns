@@ -9,6 +9,7 @@ import hexagon.Hexagon;
 public class HexagonAdapter extends Shape {
 	
 	
+	private static final long serialVersionUID = 1L;
 	private final Hexagon hexagon;
 	
 	

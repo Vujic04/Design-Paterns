@@ -37,7 +37,7 @@ public class LoadLogStrategy implements LoadStrategy {
                 JOptionPane.OK_CANCEL_OPTION,
                 JOptionPane.QUESTION_MESSAGE
             );
-            if (choice != JOptionPane.OK_OPTION) break;
+            if (choice != JOptionPane.OK_OPTION) continue;
 
             if (line.startsWith("UNDO ")) {
                 controller.undoFromLoad();
